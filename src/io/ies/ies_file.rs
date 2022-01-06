@@ -1,7 +1,7 @@
 use crate::err::Error;
 use property::Property;
 use std::{
-    default::{Default},
+    default::Default,
     fs::File,
     io::{BufReader, Read},
     path::Path,
@@ -121,104 +121,200 @@ impl IESFile {
                 }
                 Err(e) => Err(crate::io::ies::Error::ParseFloatError(iline, e)),
             },
-            // The number of vertical angles in the photometric web. 
+            // The number of vertical angles in the photometric web.
             7 => match line.parse::<u64>() {
                 Ok(val) => {
                     self.n_vertical_angles = val as usize;
                     Ok(())
-                },
+                }
                 Err(e) => Err(crate::io::ies::Error::ParseIntError(iline, e)),
             },
-            // The number of horizontal angles in the photometric web. 
+            // The number of horizontal angles in the photometric web.
             8 => match line.parse::<u64>() {
                 Ok(val) => {
                     self.n_horizontal_angles = val as usize;
                     Ok(())
-                },
+                }
                 Err(e) => Err(crate::io::ies::Error::ParseIntError(iline, e)),
             },
             9 => Ok(()),
-            // The type of unit used to measure the dimensions of the luminous opening. Use 1 for feet or 2 for meters. 
+            // The type of unit used to measure the dimensions of the luminous opening. Use 1 for feet or 2 for meters.
             10 => match line.parse::<u8>() {
                 Ok(val) => match val {
-                    1 => { self.luminous_opening_units = LuminousOpeningUnits::Feet; Ok(()) },
-                    2 => { self.luminous_opening_units = LuminousOpeningUnits::Meters; Ok(()) },
-                    _ => Err(crate::io::ies::Error::InvalidUnit(iline))
+                    1 => {
+                        self.luminous_opening_units = LuminousOpeningUnits::Feet;
+                        Ok(())
+                    }
+                    2 => {
+                        self.luminous_opening_units = LuminousOpeningUnits::Meters;
+                        Ok(())
+                    }
+                    _ => Err(crate::io::ies::Error::InvalidUnit(iline)),
                 },
                 Err(e) => Err(crate::io::ies::Error::ParseIntError(iline, e)),
             },
-            // The width, length, and height of the luminous opening. 
+            // The width, length, and height of the luminous opening.
             11 => {
-                let (vals, errs): (Vec<_>, Vec<_>) = line.split(" ").map(|str| str.parse::<f32>()).partition(Result::is_ok);
+                let (vals, errs): (Vec<_>, Vec<_>) = line
+                    .split(" ")
+                    .map(|str| str.parse::<f32>())
+                    .partition(Result::is_ok);
                 let numbers: Vec<_> = vals.into_iter().map(Result::unwrap).collect();
                 let errors: Vec<_> = errs.into_iter().map(Result::unwrap_err).collect();
                 match errors.first() {
-                    None => { 
+                    None => {
                         if numbers.len() == 3 {
                             self.luminous_opening_width = numbers[0];
                             self.luminous_opening_length = numbers[1];
                             self.luminous_opening_height = numbers[2];
                             Ok(())
                         } else {
-                            Err(crate::io::ies::Error::ArrayTooShort(iline, 3, numbers.len()))
+                            Err(crate::io::ies::Error::ArrayTooShort(
+                                iline,
+                                3,
+                                numbers.len(),
+                            ))
                         }
                     }
                     Some(e) => Err(crate::io::ies::Error::ParseFloatError(iline, e.clone())),
                 }
             }
             12 => Ok(()),
-            // The set of vertical angles, listed in increasing order. If the distribution lies completely in the bottom hemisphere, the first and last angles must be 0° and 90°, respectively. If the distribution lies completely in the top hemisphere, the first and last angles must be 90° and 180°, respectively. Otherwise, they must be 0° and 180°, respectively. 
+            // The set of vertical angles, listed in increasing order. If the distribution lies completely in the bottom hemisphere, the first and last angles must be 0° and 90°, respectively. If the distribution lies completely in the top hemisphere, the first and last angles must be 90° and 180°, respectively. Otherwise, they must be 0° and 180°, respectively.
             13 => {
-                let (vals, errs): (Vec<_>, Vec<_>) = line.split(" ").map(|str| str.parse::<f32>()).partition(Result::is_ok);
+                let (vals, errs): (Vec<_>, Vec<_>) = line
+                    .split(" ")
+                    .map(|str| str.parse::<f32>())
+                    .partition(Result::is_ok);
                 let numbers: Vec<_> = vals.into_iter().map(Result::unwrap).collect();
                 let errors: Vec<_> = errs.into_iter().map(Result::unwrap_err).collect();
                 match errors.first() {
-                    None => { 
-                        if numbers.len() == self.n_vertical_angles{
-                            self.vertical_angles = numbers;
-                            Ok(())
+                    None => {
+                        if numbers.len() == self.n_vertical_angles {
+                            if Self::vertical_angles_valid(&numbers) {
+                                self.vertical_angles = numbers;
+                                Ok(())
+                            } else {
+                                Err(crate::io::ies::Error::VerticalAnglesInvalid(iline))
+                            }
                         } else {
-                            Err(crate::io::ies::Error::ArrayTooShort(iline, self.n_vertical_angles, numbers.len()))
+                            Err(crate::io::ies::Error::ArrayTooShort(
+                                iline,
+                                self.n_vertical_angles,
+                                numbers.len(),
+                            ))
                         }
                     }
                     Some(e) => Err(crate::io::ies::Error::ParseFloatError(iline, e.clone())),
                 }
-            },
-            // The set of horizontal angles, listed in increasing order. The first angle must be 0°. The last angle determines the degree of lateral symmetry displayed by the intensity distribution. If it is 0°, the distribution is axially symmetric. If it is 90°, the distribution is symmetric in each quadrant. If it is 180°, the distribution is symmetric about a vertical plane. If it is greater than 180° and less than or equal to 360°, the distribution exhibits no lateral symmetries. All other values are invalid. 
+            }
+            // The set of horizontal angles, listed in increasing order. The first angle must be 0°. The last angle determines the degree of lateral symmetry displayed by the intensity distribution. If it is 0°, the distribution is axially symmetric. If it is 90°, the distribution is symmetric in each quadrant. If it is 180°, the distribution is symmetric about a vertical plane. If it is greater than 180° and less than or equal to 360°, the distribution exhibits no lateral symmetries. All other values are invalid.
             14 => {
-                let (vals, errs): (Vec<_>, Vec<_>) = line.split(" ").map(|str| str.parse::<f32>()).partition(Result::is_ok);
+                let (vals, errs): (Vec<_>, Vec<_>) = line
+                    .split(" ")
+                    .map(|str| str.parse::<f32>())
+                    .partition(Result::is_ok);
                 let numbers: Vec<_> = vals.into_iter().map(Result::unwrap).collect();
                 let errors: Vec<_> = errs.into_iter().map(Result::unwrap_err).collect();
                 match errors.first() {
-                    None => { 
-                        if numbers.len() == self.n_horizontal_angles{
-                            self.horizontal_angles = numbers;
-                            Ok(())
+                    None => {
+                        if numbers.len() == self.n_horizontal_angles {
+                            if Self::horizontal_angles_valid(&numbers) {
+                                self.horizontal_angles = numbers;
+                                Ok(())
+                            } else {
+                                Err(crate::io::ies::Error::HorizontalAnglesInvalid(iline))
+                            }
                         } else {
-                            Err(crate::io::ies::Error::ArrayTooShort(iline, self.n_horizontal_angles, numbers.len()))
+                            Err(crate::io::ies::Error::ArrayTooShort(
+                                iline,
+                                self.n_horizontal_angles,
+                                numbers.len(),
+                            ))
                         }
                     }
                     Some(e) => Err(crate::io::ies::Error::ParseFloatError(iline, e.clone())),
                 }
-            },
-            // The set of candela values. First all the candela values corresponding to the first horizontal angle are listed, starting with the value corresponding to the smallest vertical angle and moving up the associated vertical plane. Then the candela values corresponding to the vertical plane through the second horizontal angle are listed, and so on until the last horizontal angle. Each vertical slice of values must start on a new line. Long lines may be broken between values as needed by following the instructions given earlier. 
+            }
+            // The set of candela values. First all the candela values corresponding to the first horizontal angle are listed, starting with the value corresponding to the smallest vertical angle and moving up the associated vertical plane. Then the candela values corresponding to the vertical plane through the second horizontal angle are listed, and so on until the last horizontal angle. Each vertical slice of values must start on a new line. Long lines may be broken between values as needed by following the instructions given earlier.
             15 => {
-                let (vals, errs): (Vec<_>, Vec<_>) = line.split(" ").map(|str| str.parse::<f32>()).partition(Result::is_ok);
+                let (vals, errs): (Vec<_>, Vec<_>) = line
+                    .split(" ")
+                    .map(|str| str.parse::<f32>())
+                    .partition(Result::is_ok);
                 let numbers: Vec<_> = vals.into_iter().map(Result::unwrap).collect();
                 let errors: Vec<_> = errs.into_iter().map(Result::unwrap_err).collect();
                 match errors.first() {
-                    None => { 
+                    None => {
                         if numbers.len() == self.n_horizontal_angles * self.n_vertical_angles {
                             self.candela_values = numbers;
                             Ok(())
                         } else {
-                            Err(crate::io::ies::Error::ArrayTooShort(iline, self.n_horizontal_angles * self.n_vertical_angles, numbers.len()))
+                            Err(crate::io::ies::Error::ArrayTooShort(
+                                iline,
+                                self.n_horizontal_angles * self.n_vertical_angles,
+                                numbers.len(),
+                            ))
                         }
                     }
                     Some(e) => Err(crate::io::ies::Error::ParseFloatError(iline, e.clone())),
                 }
-            },
+            }
             _ => Err(crate::io::ies::Error::TooManyLines(iline)),
+        }
+    }
+
+    /// Checks to see that the vertical angles are valid according to the IES standard,
+    /// The valid configurations are:
+    /// - Completely in the bottom hemisphere: first angles and 0 degrees and 90 degress respectively.
+    /// - Completely in the top hemisphere: first angles and 90 degrees and 180 degress respectively.
+    /// - Otherwise: first angles and 0 degrees and 180 degress respectively.
+    fn vertical_angles_valid(angles: &Vec<f32>) -> bool {
+        match angles.first() {
+            Some(first) => match first {
+                x if *x == 0.0 => match angles.last() {
+                    None => false,
+                    Some(last) => match last {
+                        y if *y == 90.0 || *y == 180.0 => true,
+                        _ => false,
+                    },
+                },
+                x if *x == 90.0 => match angles.last() {
+                    None => false,
+                    Some(last) => match last {
+                        y if *y == 180.0 => true,
+                        _ => false,
+                    },
+                },
+                _ => false,
+            },
+            None => false,
+        }
+    }
+
+    /// Checks to see that the horizontal angles are valid according to the IES standard.
+    /// In this case, the angles are mainly used to defined symmetries, the rules are:
+    /// - First angle must always be 0.0.
+    /// - If the last values is 0.0, the distribution is axially symmetric.
+    /// - If the last value is 90.0 degress, the distribution is symmetric in each quadrant.
+    /// - If the last value is 180.0 degress, the distribution is symmetric about a vertical plane.
+    /// - If the last value is greater than 180.0 and less than or equal to 360.0, no lateral symmetries.
+    /// - Hence, the valid last values are: 0.0, 90.0, 180.0 - 360.0.  
+    fn horizontal_angles_valid(angles: &Vec<f32>) -> bool {
+        match angles.first() {
+            Some(first) => match first {
+                x if *x == 0.0 => match angles.last() {
+                    Some(last) => match last {
+                        y if *y == 0.0 => true,
+                        y if *y == 90.0 => true,
+                        y if *y >= 180.0 && *y <= 360.0 => true,
+                        _ => false,
+                    },
+                    None => false,
+                },
+                _ => false,
+            },
+            None => false,
         }
     }
 }

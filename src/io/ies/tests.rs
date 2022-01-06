@@ -34,9 +34,15 @@ fn basic_parse_test() {
             assert_eq!(ies.luminous_opening_width(), 0.0);
             assert_eq!(ies.luminous_opening_length(), 0.0);
             assert_eq!(ies.luminous_opening_height(), 0.0);
-            assert_eq!(ies.vertical_angles(), vec![0.0, 5.0, 10.0, 20.0, 30.0, 45.0, 65.0, 90.0]);
+            assert_eq!(
+                ies.vertical_angles(),
+                vec![0.0, 5.0, 10.0, 20.0, 30.0, 45.0, 65.0, 90.0]
+            );
             assert_eq!(ies.horizontal_angles(), vec![0.0]);
-            assert_eq!(ies.candela_values(), vec![1000.0, 1100.0, 1300.0, 1150.0, 930.0, 650.0, 350.0, 0.0]);
+            assert_eq!(
+                ies.candela_values(),
+                vec![1000.0, 1100.0, 1300.0, 1150.0, 930.0, 650.0, 350.0, 0.0]
+            );
         }
     }
 }

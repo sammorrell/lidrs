@@ -7,6 +7,8 @@ pub enum Error {
     ParseIntError(usize, std::num::ParseIntError),
     InvalidUnit(usize),
     ArrayTooShort(usize, usize, usize),
+    VerticalAnglesInvalid(usize),
+    HorizontalAnglesInvalid(usize),
 }
 
 impl Display for Error {
@@ -22,12 +24,21 @@ impl Display for Error {
                 ),
                 Error::ParseIntError(ref iline, ref err) => {
                     format!("Error parsing integer number on line {}: {}", iline, err)
-                },
+                }
                 Error::InvalidUnit(ref iline) => {
                     format!("Line {}: Invalid unit used. ", iline)
-                },
+                }
                 Error::ArrayTooShort(ref iline, ref expected, ref found) => {
-                    format!("Line {}: Array too short. Expected {}, but found {}. ", iline, expected, found)
+                    format!(
+                        "Line {}: Array too short. Expected {}, but found {}. ",
+                        iline, expected, found
+                    )
+                }
+                Error::VerticalAnglesInvalid(ref iline) => {
+                    format!("Line {}: Vertical angles are invalid and don't conform to a hemisphere or the whole domain. ", iline )
+                }
+                Error::HorizontalAnglesInvalid(ref iline) => {
+                    format!("Line {}: Horizontal angles are invalid and do not conform to an allowed lateral symmetry. ", iline )
                 }
             }
         })
