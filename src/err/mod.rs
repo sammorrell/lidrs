@@ -4,6 +4,7 @@ use std::fmt::Display;
 pub enum Error {
     IOError(std::io::Error),
     IESError(crate::io::ies::Error),
+    LDTError(crate::io::ldt::Error),
 }
 
 impl From<std::io::Error> for Error {
@@ -18,12 +19,19 @@ impl From<crate::io::ies::Error> for Error {
     }
 }
 
+impl From<crate::io::ldt::Error> for Error {
+    fn from(err: crate::io::ldt::Error) -> Self {
+        Error::LDTError(err)
+    }
+}
+
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", {
             match self {
                 Error::IOError(ref e) => format!("IO Error: {}", e),
                 Error::IESError(ref e) => format!("IES Parse Error: {}", e),
+                Error::LDTError(ref e) => format!("EULUMDAT (LDT) Parse Error: {}", e),
             }
         })
     }
