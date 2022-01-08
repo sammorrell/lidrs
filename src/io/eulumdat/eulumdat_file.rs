@@ -1,7 +1,7 @@
 use super::err as ldt_err;
 use super::{
-    LdtSymmetry,
-    LdtType,
+    EulumdatSymmetry,
+    EulumdatType,
     util,
 };
 use crate::err::Error;
@@ -21,13 +21,13 @@ const N_LAMP_PARAMS: usize = 6;
 
 #[allow(dead_code)]
 #[derive(Default, Debug, Property)]
-pub struct LdtFile {
+pub struct EulumdatFile {
     /// The first line of the file. Contains company identification / data bank / version / format identification. 
     header: String,
     /// The type indicator. 
-    ltype: LdtType,
+    ltype: EulumdatType,
     /// The symmetry indicator. 
-    symmetry: LdtSymmetry,
+    symmetry: EulumdatSymmetry,
 
     /// Mc - Number of C-Planes between 0 - 360 degrees. 
     n_cplanes: usize,
@@ -106,20 +106,20 @@ pub struct LdtFile {
     intensities: Vec<f64>,
 }
 
-impl LdtFile {
+impl EulumdatFile {
     // Returns a new instance of an IES file with default values.
-    pub fn new() -> LdtFile {
-        LdtFile {
+    pub fn new() -> EulumdatFile {
+        EulumdatFile {
             ..Default::default()
         }
     }
 
     /// A wrapper around the parsing code, that opens a file and reads it.
-    pub fn parse_file(filepath: &Path) -> Result<LdtFile, Error> {
+    pub fn parse_file(filepath: &Path) -> Result<EulumdatFile, Error> {
         let infile = File::open(filepath)?;
         let mut ldt_string_buf = String::new();
         BufReader::new(infile).read_to_string(&mut ldt_string_buf)?;
-        let mut ldt = LdtFile::new();
+        let mut ldt = EulumdatFile::new();
         ldt.parse(&ldt_string_buf)?;
         Ok(ldt)
     }
@@ -289,22 +289,22 @@ impl LdtFile {
     /// The Mc1 parameter, as defined by the spec.
     pub fn mc1(&self) -> usize {
         match &self.symmetry {
-            LdtSymmetry::NoSymmetry => 1,
-            LdtSymmetry::AboutVerticalAxis => 1,
-            LdtSymmetry::C0C180Plane => 1,
-            LdtSymmetry::C90C270Plane => 3 * (self.n_cplanes() / 4) + 1,
-            LdtSymmetry::C0C180C90C270Plane => 1,
+            EulumdatSymmetry::NoSymmetry => 1,
+            EulumdatSymmetry::AboutVerticalAxis => 1,
+            EulumdatSymmetry::C0C180Plane => 1,
+            EulumdatSymmetry::C90C270Plane => 3 * (self.n_cplanes() / 4) + 1,
+            EulumdatSymmetry::C0C180C90C270Plane => 1,
         }
     }
 
     /// The Mc1 parameter, as defined by the spec.
     pub fn mc2(&self) -> usize {
         match &self.symmetry {
-            LdtSymmetry::NoSymmetry => self.n_cplanes(),
-            LdtSymmetry::AboutVerticalAxis => 1,
-            LdtSymmetry::C0C180Plane => self.n_cplanes() / 2 + 1,
-            LdtSymmetry::C90C270Plane => self.mc1() + self.n_cplanes / 2,
-            LdtSymmetry::C0C180C90C270Plane => self.n_cplanes() / 4 + 1,
+            EulumdatSymmetry::NoSymmetry => self.n_cplanes(),
+            EulumdatSymmetry::AboutVerticalAxis => 1,
+            EulumdatSymmetry::C0C180Plane => self.n_cplanes() / 2 + 1,
+            EulumdatSymmetry::C90C270Plane => self.mc1() + self.n_cplanes / 2,
+            EulumdatSymmetry::C0C180C90C270Plane => self.n_cplanes() / 4 + 1,
         }
     }
 }

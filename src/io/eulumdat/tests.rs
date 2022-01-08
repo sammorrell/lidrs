@@ -1,4 +1,4 @@
-use super::LdtFile;
+use super::EulumdatFile;
 use std::path::Path;
 
 /// Example file provided by Paul Bourne's documentation:
@@ -7,7 +7,7 @@ const EXAMPLE_LDT_FILE: &str = include_str!("example.ldt");
 
 #[test]
 fn test_parse_ldt() {
-    let mut ldt = LdtFile::new();
+    let mut ldt = EulumdatFile::new();
     match ldt.parse(&EXAMPLE_LDT_FILE.to_owned()) {
         Ok(_) => {
 
@@ -22,7 +22,7 @@ fn test_parse_ldt() {
 
 #[test]
 fn test_parse_ldt_file() {
-    match LdtFile::parse_file(Path::new("./src/io/ldt/example.ldt")) {
+    match EulumdatFile::parse_file(Path::new("./src/io/eulumdat/example.ldt")) {
         Ok(ldt) => {
 
             // Check that the arrays are the correct length. 

@@ -1,4 +1,4 @@
-//! EULUMETDAT File Struct.
+//! EULUMTDAT File Struct.
 //! 
 //! This module contains the structs and enums for supporting parsing of the EULUMDAT (LDT) file format. 
 //! Although I was unable to find any formal documentation during the development, my information on this format was drawn from two different sources:
@@ -11,8 +11,8 @@ pub mod util;
 pub mod symmetry;
 pub mod ltyp;
 pub mod cplane;
-pub mod ldt_file;
-pub use self::{err::*, util::*, symmetry::*, ltyp::*, cplane::*, ldt_file::*};
+pub mod eulumdat_file;
+pub use self::{err::*, util::*, symmetry::*, ltyp::*, cplane::*, eulumdat_file::*};
 
 #[cfg(test)]
 pub mod tests;

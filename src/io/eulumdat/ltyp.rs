@@ -2,14 +2,14 @@ use num_enum::TryFromPrimitive;
 
 #[derive(Debug, Clone, TryFromPrimitive)]
 #[repr(usize)]
-pub enum LdtType {
+pub enum EulumdatType {
     PointSourceWithSymmetryAboutVerticalAxis = 1,
     LinearLumminaire = 2,
     PointSourceWithOtherSymmetry = 3,
 }
 
-impl Default for LdtType {
+impl Default for EulumdatType {
     fn default() -> Self {
-        LdtType::PointSourceWithSymmetryAboutVerticalAxis
+        EulumdatType::PointSourceWithSymmetryAboutVerticalAxis
     }
 }

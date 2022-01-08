@@ -4,7 +4,7 @@ use std::fmt::Display;
 pub enum Error {
     IOError(std::io::Error),
     IESError(crate::io::ies::Error),
-    LDTError(crate::io::ldt::Error),
+    LDTError(crate::io::eulumdat::Error),
 }
 
 impl From<std::io::Error> for Error {
@@ -19,8 +19,8 @@ impl From<crate::io::ies::Error> for Error {
     }
 }
 
-impl From<crate::io::ldt::Error> for Error {
-    fn from(err: crate::io::ldt::Error) -> Self {
+impl From<crate::io::eulumdat::Error> for Error {
+    fn from(err: crate::io::eulumdat::Error) -> Self {
         Error::LDTError(err)
     }
 }
