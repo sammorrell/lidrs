@@ -1,5 +1,4 @@
 use super::{IesFile, LuminousOpeningUnits};
-use std::path::Path;
 
 const IESNA_1991_FILE: &str = "IESNA91
 [TEST] Simple demo intensity distribution 
