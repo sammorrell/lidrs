@@ -1,15 +1,15 @@
 /// A list of possible IES standards.
 #[derive(Debug, PartialEq, Eq)]
 pub enum IesStandard {
-    Lm63_1986,
-    Lm63_1991,
-    Lm63_1995,
-    Lm63_2002,
+    Iesna1986,
+    Iesna1991,
+    Iesna1995,
+    Iesna2002,
 }
 
 impl Default for IesStandard {
     fn default() -> Self {
-        Self::Lm63_1986
+        Self::Iesna1986
     }
 }
 
@@ -18,10 +18,10 @@ impl From<&str> for IesStandard {
     /// The default case will catch anything that
     fn from(str: &str) -> Self {
         match str {
-            "IESNA91" => IesStandard::Lm63_1991,
-            "IESNA:LM-63-1995" => IesStandard::Lm63_1995,
-            "IESNA:LM-63-2002" => IesStandard::Lm63_2002,
-            _ => IesStandard::Lm63_1986,
+            "IESNA91" => IesStandard::Iesna1991,
+            "IESNA:LM-63-1995" => IesStandard::Iesna1995,
+            "IESNA:LM-63-2002" => IesStandard::Iesna2002,
+            _ => IesStandard::Iesna1986,
         }
     }
 }

@@ -112,7 +112,7 @@ impl IesFile {
     /// Parses the keywords section of the file.
     pub fn parse_keywords(&mut self, ies_string: &String) -> Result<(), ies_err::Error> {
         // First we find the start line, if not 1986 standard, this will be after the first line.
-        let start = if self.standard == IesStandard::Lm63_1986 {
+        let start = if self.standard == IesStandard::Iesna1986 {
             0
         } else {
             1
