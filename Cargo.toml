@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 property = "0.3.*"
 regex = "1.5.*"
+num_enum = "0.5.*"
