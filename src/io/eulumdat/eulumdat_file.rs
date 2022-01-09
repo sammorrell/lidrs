@@ -6,6 +6,7 @@ use super::{
 };
 use crate::err::Error;
 use property::Property;
+use std::io::Write;
 use std::{
     default::Default,
     fs::File,
@@ -246,10 +247,6 @@ impl EulumdatFile {
             i if i >= LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets && i < LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 => {
                 self.direct_ratios.push(util::parse_f64(iline, line)?); Ok(())
             },
-            // Get the wattage. 
-            i if i >= LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 && i < LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 => {
-                self.direct_ratios.push(util::parse_f64(iline, line)?); Ok(())
-            },
             // Get the C-angles. 
             i if self.is_c_angles(i) => {
                 self.c_angles.push(util::parse_f64(iline, line)?); Ok(())
@@ -271,9 +268,19 @@ impl EulumdatFile {
         iline >= LAMP_SECTION_START + isect * self.n_lamp_sets && iline < LAMP_SECTION_START + (isect + 1) * self.n_lamp_sets
     }
 
+    /// Provides the current index in the current parameter for the lamp set. 
+    fn i_lamp_section(&self, iline: usize, isect: usize) -> usize {
+        iline - (LAMP_SECTION_START + isect * self.n_lamp_sets)
+    }
+
     /// Filters out the lines that contain C-angles.
     fn is_c_angles(&self, iline: usize) -> bool {
         iline >= LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 && iline < LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 + self.n_cplanes
+    }
+
+    /// Provides the current index of the C-angle at this line. 
+    fn i_c_angle(&self, iline: usize) -> usize {
+        iline - (LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10)
     }
 
     /// Filter out the lines that contain G-angles. 
@@ -281,9 +288,19 @@ impl EulumdatFile {
         iline >= LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 + self.n_cplanes && iline < LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 + self.n_cplanes + self.n_luminous_intensities_per_cplane
     }
 
+    /// Provides the current index of the G-angle at this line. 
+    fn i_g_angle(&self, iline: usize) -> usize {
+        iline - (LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 + self.n_cplanes)
+    }
+
     /// Filter out the lines that contain the luminous intensities. 
     fn is_luminous_intensities(&self, iline: usize) -> bool {
         iline >= LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 + self.n_cplanes + self.n_luminous_intensities_per_cplane
+    }
+
+    /// Filter out the lines that contain the luminous intensities. 
+    fn i_luminous_intensity(&self, iline: usize) -> usize {
+        iline - (LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 + self.n_cplanes + self.n_luminous_intensities_per_cplane)
     }
 
     /// The Mc1 parameter, as defined by the spec.
@@ -306,5 +323,92 @@ impl EulumdatFile {
             EulumdatSymmetry::C90C270Plane => self.mc1() + self.n_cplanes / 2,
             EulumdatSymmetry::C0C180C90C270Plane => self.n_cplanes() / 4 + 1,
         }
+    }
+
+    /// Get the expected number of lines in the file.
+    fn n_file_lines(&self) -> usize {
+        LAMP_SECTION_START // The fixed length parameter section of the file. 
+        + N_LAMP_PARAMS * self.n_lamp_sets  // The defintion of lamp sets.
+        + 10 // The fixed-length (10-long) direct indices section.
+        + self.n_cplanes // The number C-plane angles. 
+        + self.n_luminous_intensities_per_cplane // The G-plane angles. 
+        + (self.mc2() - self.mc1() + 1) * self.n_luminous_intensities_per_cplane() // The number of luminous intensities, which is dependent on the symmetry of the object. 
+    }
+
+    pub fn to_file(&self, outpath: &Path) -> Result<(), Error> {
+        let mut file = File::create(outpath)?;
+        file.write(self.to_string().as_bytes())?;
+        Ok(())
+    }
+}
+
+impl ToString for EulumdatFile {
+    /// Writes the object to a EULUMDAT format string, which can be written to a file. 
+    /// We need to be careful that we limit to the correct size of string, as defined by the spec. 
+    fn to_string(&self) -> String {
+        (1..self.n_file_lines())
+        .into_iter()
+        .fold("".to_string(), |accum, iline| {
+            accum + format!("{}\n", match iline {
+                1 => self.header.clone(),
+                2 => (self.ltype.clone() as usize).to_string(),
+                3 => (self.symmetry.clone() as usize).to_string(),
+                4 => self.n_cplanes.to_string(),
+                5 => self.cplane_dist.to_string(),
+                6 => self.n_luminous_intensities_per_cplane.to_string(),
+                7 => self.distance_between_luminous_intensities_per_cplane.to_string(),
+                8 => self.measurement_report_number.clone(),
+                9 => self.luminaire_name.clone(),
+                10 => self.luminaire_number.clone(),
+                11 => self.filename.clone(),
+                12 => self.date_user.clone(),
+                13 => self.luminaire_length.to_string(),
+                14 => self.luminaire_width.to_string(),
+                15 => self.luminaire_height.to_string(),
+                16 => self.luminous_area_length.to_string(),
+                17 => self.luminous_area_width.to_string(),
+                18 => self.luminous_area_height_c0.to_string(),
+                19 => self.luminous_area_height_c90.to_string(),
+                20 => self.luminous_area_height_c180.to_string(),
+                21 => self.luminous_area_height_c270.to_string(),
+                22 => self.downward_flux_fraction.to_string(),
+                23 => self.light_output_ratio_luminaire.to_string(),
+                24 => self.luminous_intensity_conversion_factor.to_string(),
+                25 => self.tilt.to_string(),
+                26 => self.n_lamp_sets.to_string(),
+                i if self.lamp_section(i, 0) => {
+                    self.n_lamp[self.i_lamp_section(iline, 0)].to_string()
+                },
+                i if self.lamp_section(i, 1) => {
+                    self.lamp_type[self.i_lamp_section(iline, 1)].clone()
+                },
+                i if self.lamp_section(i, 2) => {
+                    self.tot_luminous_flux[self.i_lamp_section(iline, 2)].to_string()
+                },
+                i if self.lamp_section(i, 3) => {
+                    self.color_temperature[self.i_lamp_section(iline, 3)].clone()
+                },
+                i if self.lamp_section(i, 4) => {
+                    self.color_rendering_group[self.i_lamp_section(iline, 4)].clone()
+                },
+                i if self.lamp_section(i, 5) => {
+                    self.wattage[self.i_lamp_section(iline, 5)].to_string()
+                },
+                i if i >= LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets && i < LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets + 10 => {
+                    let i_direct_ratio = iline - (LAMP_SECTION_START + N_LAMP_PARAMS * self.n_lamp_sets);
+                    self.direct_ratios[i_direct_ratio].to_string()
+                },
+                i if self.is_c_angles(i) => {
+                    self.c_angles[self.i_c_angle(iline)].to_string()
+                },
+                i if self.is_g_angles(i) => {
+                    self.g_angles[self.i_g_angle(iline)].to_string()
+                },
+                i if self.is_luminous_intensities(i) => {
+                    self.intensities[self.i_luminous_intensity(iline)].to_string()
+                },
+                _ => "".to_owned(),
+            }).as_ref()
+        })
     }
 }
