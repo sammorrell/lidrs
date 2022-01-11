@@ -5,7 +5,7 @@ use num_enum::TryFromPrimitive;
 pub enum EulumdatSymmetry {
     NoSymmetry = 0,
     AboutVerticalAxis = 1,
-    C0C180Plane = 2,    
+    C0C180Plane = 2,
     C90C270Plane = 3,
     C0C180C90C270Plane = 4,
 }

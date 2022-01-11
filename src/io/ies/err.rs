@@ -40,18 +40,23 @@ impl Display for Error {
                 Error::InvalidKeyword(ref iline) => {
                     format!("Line {}: Invalid keyword. ", iline)
                 }
-                Error::ParseFloatError(ref iline, ref iitem, ref err) => {
-                    match iitem {
-                        Some(iitem) => format!("Error parsing floating point number at item {} on line {}: {}", iitem, iline, err),
-                        None => format!("Error parsing floating point number on line {}: {}", iline, err)
-                    }
+                Error::ParseFloatError(ref iline, ref iitem, ref err) => match iitem {
+                    Some(iitem) => format!(
+                        "Error parsing floating point number at item {} on line {}: {}",
+                        iitem, iline, err
+                    ),
+                    None => format!(
+                        "Error parsing floating point number on line {}: {}",
+                        iline, err
+                    ),
                 },
-                Error::ParseIntError(ref iline, ref iitem, ref err) => {
-                    match iitem {
-                        Some(iitem) => format!("Error parsing integer number at item {} on line {}: {}", iitem, iline, err),
-                        None => format!("Error parsing integer number on line {}: {}", iline, err)
-                    }
-                }
+                Error::ParseIntError(ref iline, ref iitem, ref err) => match iitem {
+                    Some(iitem) => format!(
+                        "Error parsing integer number at item {} on line {}: {}",
+                        iitem, iline, err
+                    ),
+                    None => format!("Error parsing integer number on line {}: {}", iline, err),
+                },
                 Error::InvalidUnit(ref iline) => {
                     format!("Line {}: Invalid unit used. ", iline)
                 }

@@ -10,12 +10,17 @@ fn test_parse_ldt() {
     let mut ldt = EulumdatFile::new();
     match ldt.parse(&EXAMPLE_LDT_FILE.to_owned()) {
         Ok(_) => {
-
-            // Check that the arrays are the correct length. 
+            // Check that the arrays are the correct length.
             assert_eq!(ldt.c_angles().iter().count(), ldt.n_cplanes());
-            assert_eq!(ldt.g_angles().iter().count(), ldt.n_luminous_intensities_per_cplane());
-            assert_eq!(ldt.intensities().iter().count(), (ldt.mc2() - ldt.mc1() + 1) * ldt.n_luminous_intensities_per_cplane());
-        },
+            assert_eq!(
+                ldt.g_angles().iter().count(),
+                ldt.n_luminous_intensities_per_cplane()
+            );
+            assert_eq!(
+                ldt.intensities().iter().count(),
+                (ldt.mc2() - ldt.mc1() + 1) * ldt.n_luminous_intensities_per_cplane()
+            );
+        }
         Err(e) => assert!(false, "LDT parse error: {}", e),
     }
 }
@@ -24,12 +29,17 @@ fn test_parse_ldt() {
 fn test_parse_ldt_file() {
     match EulumdatFile::parse_file(Path::new("./src/io/eulumdat/example.ldt")) {
         Ok(ldt) => {
-
-            // Check that the arrays are the correct length. 
+            // Check that the arrays are the correct length.
             assert_eq!(ldt.c_angles().iter().count(), ldt.n_cplanes());
-            assert_eq!(ldt.g_angles().iter().count(), ldt.n_luminous_intensities_per_cplane());
-            assert_eq!(ldt.intensities().iter().count(), (ldt.mc2() - ldt.mc1() + 1) * ldt.n_luminous_intensities_per_cplane());
-        },
+            assert_eq!(
+                ldt.g_angles().iter().count(),
+                ldt.n_luminous_intensities_per_cplane()
+            );
+            assert_eq!(
+                ldt.intensities().iter().count(),
+                (ldt.mc2() - ldt.mc1() + 1) * ldt.n_luminous_intensities_per_cplane()
+            );
+        }
         Err(e) => assert!(false, "LDT file parse error: {}", e),
     }
 }

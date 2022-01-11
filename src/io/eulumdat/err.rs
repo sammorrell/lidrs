@@ -1,7 +1,4 @@
-use std::{
-    fmt::Display,
-    rc::Rc,
-};
+use std::{fmt::Display, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub enum Error {
@@ -10,7 +7,7 @@ pub enum Error {
     ParseIntError(usize, std::num::ParseIntError),
     InvalidUnit(usize),
     ArrayTooShort(usize, usize, usize),
-    FromPrimitiveError(usize, Rc<dyn std::error::Error>)
+    FromPrimitiveError(usize, Rc<dyn std::error::Error>),
 }
 
 impl Display for Error {
@@ -28,13 +25,16 @@ impl Display for Error {
                         "Line {}: Array too short. Expected {}, but found {}. ",
                         iline, expected, found
                     )
-                },
+                }
                 Error::ParseFloatError(ref iline, ref err) => {
-                    format!("Error parsing floating point number on line {}: {}", iline, err)
-                },
+                    format!(
+                        "Error parsing floating point number on line {}: {}",
+                        iline, err
+                    )
+                }
                 Error::ParseIntError(ref iline, ref err) => {
                     format!("Error parsing integer number on line {}: {}", iline, err)
-                },
+                }
                 Error::FromPrimitiveError(ref iline, ref err) => {
                     format!("Error converting from primitive on line {}: {}", iline, err)
                 }

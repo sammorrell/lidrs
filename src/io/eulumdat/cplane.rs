@@ -4,5 +4,5 @@ use property::Property;
 pub struct CPlane {
     npts: usize,
     verticle_angles: Vec<f32>,
-    values: Vec<f32>
+    values: Vec<f32>,
 }

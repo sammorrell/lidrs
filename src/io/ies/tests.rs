@@ -60,6 +60,7 @@ fn basic_parse_test() {
             assert!(IesFile::horizontal_angles_valid(
                 &ies.horizontal_angles().to_vec()
             ));
+
         }
     }
 }
