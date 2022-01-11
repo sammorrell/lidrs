@@ -78,9 +78,11 @@ impl Tilt {
                                     ))
                                 }
                             }
-                            Some(e) => {
-                                Err(crate::io::ies::Error::ParseFloatError(iline, None, e.clone()))
-                            }
+                            Some(e) => Err(crate::io::ies::Error::ParseFloatError(
+                                iline,
+                                None,
+                                e.clone(),
+                            )),
                         }
                     }
                     // Get the multiplying factors.
@@ -104,9 +106,11 @@ impl Tilt {
                                     ))
                                 }
                             }
-                            Some(e) => {
-                                Err(crate::io::ies::Error::ParseFloatError(iline, None, e.clone()))
-                            }
+                            Some(e) => Err(crate::io::ies::Error::ParseFloatError(
+                                iline,
+                                None,
+                                e.clone(),
+                            )),
                         }
                     }
                     _ => Err(Error::TiltFiltTooLong(iline)),
@@ -119,5 +123,21 @@ impl Tilt {
             None => Ok(Some(tilt)),
             Some(err) => Err(err.as_ref().unwrap_err().clone()),
         }
+    }
+}
+
+impl ToString for Tilt {
+    fn to_string(&self) -> String {
+        format!(
+            "TILT=INCLUDE\n{}\n{}\n{}\n{}\n",
+            self.lamp_to_lumminaire_geometry,
+            self.no_tilt_angles,
+            self.angles
+                .iter()
+                .fold("".to_string(), |accum, val| accum + &format!("{} ", val)),
+            self.multiplying_factors
+                .iter()
+                .fold("".to_string(), |accum, val| accum + &format!("{} ", val)),
+        )
     }
 }

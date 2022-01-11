@@ -35,6 +35,19 @@ impl From<usize> for LuminousOpeningUnits {
     }
 }
 
+impl std::fmt::Display for LuminousOpeningUnits {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Feet => "1",
+                Self::Meters => "2",
+            }
+        )
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Default, Debug, Property)]
 pub struct IesFile {
@@ -270,77 +283,111 @@ impl IesFile {
                             self.n_lamps = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err)),
+                        Err(err) => {
+                            Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err))
+                        }
                     },
                     1 => match item.parse() {
                         Ok(val) => {
                             self.lumens_per_lamp = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                        Err(err) => Err(ies_err::Error::ParseFloatError(
+                            *iline,
+                            Some(iitem + 1),
+                            err,
+                        )),
                     },
                     2 => match item.parse() {
                         Ok(val) => {
                             self.candela_multiplying_factor = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                        Err(err) => Err(ies_err::Error::ParseFloatError(
+                            *iline,
+                            Some(iitem + 1),
+                            err,
+                        )),
                     },
                     3 => match item.parse() {
                         Ok(val) => {
                             self.n_vertical_angles = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err)),
+                        Err(err) => {
+                            Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err))
+                        }
                     },
                     4 => match item.parse() {
                         Ok(val) => {
                             self.n_horizontal_angles = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err)),
+                        Err(err) => {
+                            Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err))
+                        }
                     },
                     5 => match item.parse() {
                         Ok(val) => {
                             self.photometric_type = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err)),
+                        Err(err) => {
+                            Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err))
+                        }
                     },
                     6 => match item.parse::<usize>() {
                         Ok(val) => {
                             self.luminous_opening_units = val.into();
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err)),
+                        Err(err) => {
+                            Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err))
+                        }
                     },
                     7 => match item.parse() {
                         Ok(val) => {
                             self.luminous_opening_width = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                        Err(err) => Err(ies_err::Error::ParseFloatError(
+                            *iline,
+                            Some(iitem + 1),
+                            err,
+                        )),
                     },
                     8 => match item.parse() {
                         Ok(val) => {
                             self.luminous_opening_length = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                        Err(err) => Err(ies_err::Error::ParseFloatError(
+                            *iline,
+                            Some(iitem + 1),
+                            err,
+                        )),
                     },
                     9 => match item.parse() {
                         Ok(val) => {
                             self.luminous_opening_height = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                        Err(err) => Err(ies_err::Error::ParseFloatError(
+                            *iline,
+                            Some(iitem + 1),
+                            err,
+                        )),
                     },
                     10 => match item.parse() {
                         Ok(val) => {
                             self.ballast_factor = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                        Err(err) => Err(ies_err::Error::ParseFloatError(
+                            *iline,
+                            Some(iitem + 1),
+                            err,
+                        )),
                     },
                     11 => Ok(()),
                     12 => match item.parse() {
@@ -348,7 +395,11 @@ impl IesFile {
                             self.input_watts = val;
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                        Err(err) => Err(ies_err::Error::ParseFloatError(
+                            *iline,
+                            Some(iitem + 1),
+                            err,
+                        )),
                     },
                     // We will now read the vertical angles from the file.
                     i if i > 12 && i <= 12 + self.n_vertical_angles => match item.parse() {
@@ -356,7 +407,11 @@ impl IesFile {
                             self.vertical_angles.push(val);
                             Ok(())
                         }
-                        Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                        Err(err) => Err(ies_err::Error::ParseFloatError(
+                            *iline,
+                            Some(iitem + 1),
+                            err,
+                        )),
                     },
                     // Now read the horizontal values from the file.
                     i if i > 12 + self.n_vertical_angles
@@ -367,7 +422,11 @@ impl IesFile {
                                 self.horizontal_angles.push(val);
                                 Ok(())
                             }
-                            Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                            Err(err) => Err(ies_err::Error::ParseFloatError(
+                                *iline,
+                                Some(iitem + 1),
+                                err,
+                            )),
                         }
                     }
                     // Now read the candela values.
@@ -377,7 +436,11 @@ impl IesFile {
                                 self.candela_values.push(val);
                                 Ok(())
                             }
-                            Err(err) => Err(ies_err::Error::ParseFloatError(*iline, Some(iitem + 1), err)),
+                            Err(err) => Err(ies_err::Error::ParseFloatError(
+                                *iline,
+                                Some(iitem + 1),
+                                err,
+                            )),
                         }
                     }
                     // If the properties are not consistent with the arrays, we want to put this here just to check.
@@ -456,5 +519,77 @@ impl IesFile {
             },
             None => false,
         }
+    }
+
+    /// Outputs the keywords in the file to a string.
+    pub fn keywords_to_string(&self) -> String {
+        self.keywords
+            .iter()
+            .fold("".to_string(), |accum, (key, val)| {
+                accum + &format!("[{}] {}\n", key, val)
+            })
+    }
+}
+
+impl ToString for IesFile {
+    fn to_string(&self) -> String {
+        let mut output = String::new();
+
+        // Get the standard header.
+        let stan = self.standard.to_string();
+        if !stan.is_empty() {
+            output = format!("{}\n", &stan);
+        };
+
+        // Output keywords
+        output += &self.keywords_to_string();
+
+        // Output the tilt.
+        let tilt_str = match &self.tilt {
+            None => String::from("TILT=NONE\n"),
+            Some(val) => val.to_string(),
+        };
+        output += &tilt_str;
+
+        // Now output the parameters and arrays.
+        output += &format!(
+            "{} {} {} {} {} {} {} {} {} {}\n",
+            self.n_lamps,
+            self.lumens_per_lamp,
+            self.candela_multiplying_factor,
+            self.n_vertical_angles,
+            self.n_horizontal_angles,
+            self.photometric_type,
+            self.luminous_opening_units,
+            self.luminous_opening_width,
+            self.luminous_opening_length,
+            self.luminous_opening_height
+        );
+        output += &format!("{} {} {}\n", self.ballast_factor, 1, self.input_watts,);
+        output += &format!(
+            "{}\n",
+            self.vertical_angles
+                .iter()
+                .fold(String::new(), |accum, val| accum + &format!("{} ", val))
+        );
+        output += &format!(
+            "{}\n",
+            self.horizontal_angles
+                .iter()
+                .fold(String::new(), |accum, val| accum + &format!("{} ", val))
+        );
+        output += &format!(
+            "{}\n",
+            self.candela_values
+                .chunks(self.n_vertical_angles)
+                .fold(String::new(), |accum, val| accum
+                    + &format!(
+                        "{}\n",
+                        val.iter()
+                            .fold(String::new(), |accum, val| accum + &format!("{} ", val))
+                    ))
+        );
+
+        output
     }
 }
