@@ -2,11 +2,10 @@ use super::err as ldt_err;
 use super::{util, EulumdatSymmetry, EulumdatType};
 use crate::err::Error;
 use property::Property;
-use std::io::Write;
 use std::{
     default::Default,
     fs::File,
-    io::{BufReader, Read},
+    io::{BufReader, Read, Write},
     path::Path,
     rc::Rc,
 };
@@ -440,6 +439,8 @@ impl EulumdatFile {
         // The number of luminous intensities, which is dependent on the symmetry of the object.
     }
 
+    /// Writes the currently loaded EULUMDAT file to a specified file. 
+    /// The written value is determined by `EulumdatFile::to_string(&self)`. 
     pub fn to_file(&self, outpath: &Path) -> Result<(), Error> {
         let mut file = File::create(outpath)?;
         file.write(self.to_string().as_bytes())?;

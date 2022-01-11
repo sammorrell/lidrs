@@ -7,7 +7,7 @@ use std::{
     collections::HashMap,
     default::Default,
     fs::File,
-    io::{BufReader, Read},
+    io::{BufReader, Read, Write},
     path::Path,
 };
 
@@ -519,6 +519,14 @@ impl IesFile {
             },
             None => false,
         }
+    }
+
+    /// Writes the currently loaded EULUMDAT file to a specified file. 
+    /// The written value is determined by `LdtFile::to_string(&self)`. 
+    pub fn to_file(&self, outpath: &Path) -> Result<(), Error> {
+        let mut file = File::create(outpath)?;
+        file.write(self.to_string().as_bytes())?;
+        Ok(())
     }
 
     /// Outputs the keywords in the file to a string.
