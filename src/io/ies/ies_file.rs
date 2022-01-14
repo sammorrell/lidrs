@@ -1,6 +1,10 @@
 use super::err as ies_err;
 use super::{standard::IesStandard, tilt::Tilt};
-use crate::err::Error;
+use crate::photweb;
+use crate::{
+    err::Error,
+    photweb::{PhotometricWeb, PhotometricWebReader},
+};
 use property::Property;
 use regex::Regex;
 use std::{
@@ -521,8 +525,8 @@ impl IesFile {
         }
     }
 
-    /// Writes the currently loaded EULUMDAT file to a specified file. 
-    /// The written value is determined by `LdtFile::to_string(&self)`. 
+    /// Writes the currently loaded EULUMDAT file to a specified file.
+    /// The written value is determined by `LdtFile::to_string(&self)`.
     pub fn to_file(&self, outpath: &Path) -> Result<(), Error> {
         let mut file = File::create(outpath)?;
         file.write(self.to_string().as_bytes())?;
@@ -599,5 +603,21 @@ impl ToString for IesFile {
         );
 
         output
+    }
+}
+
+impl From<IesFile> for PhotometricWeb {
+    fn from(ies: IesFile) -> Self {
+        let photweb = PhotometricWeb::new();
+        photweb
+    }
+}
+
+//TODO: Implement conversion.
+impl PhotometricWebReader for IesFile {
+    fn read(&self, path: &Path) -> Result<PhotometricWeb, Error> {
+        let ies_file = Self::parse_file(path)?;
+        let photweb = ies_file.into();
+        Ok(photweb)
     }
 }

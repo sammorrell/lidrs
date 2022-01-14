@@ -1,6 +1,7 @@
 use super::err as ldt_err;
 use super::{util, EulumdatSymmetry, EulumdatType};
-use crate::err::Error;
+use crate::photweb::{IntensityUnits, PhotometricWeb, Plane, PlaneOrientation};
+use crate::{err::Error, photweb::PhotometricWebReader};
 use property::Property;
 use std::{
     default::Default,
@@ -16,7 +17,7 @@ const LAMP_SECTION_START: usize = 27;
 const N_LAMP_PARAMS: usize = 6;
 
 #[allow(dead_code)]
-#[derive(Default, Debug, Property)]
+#[derive(Default, Debug, Clone, Property, PartialEq)]
 pub struct EulumdatFile {
     /// The first line of the file. Contains company identification / data bank / version / format identification.
     header: String,
@@ -439,12 +440,111 @@ impl EulumdatFile {
         // The number of luminous intensities, which is dependent on the symmetry of the object.
     }
 
-    /// Writes the currently loaded EULUMDAT file to a specified file. 
-    /// The written value is determined by `EulumdatFile::to_string(&self)`. 
+    /// Writes the currently loaded EULUMDAT file to a specified file.
+    /// The written value is determined by `EulumdatFile::to_string(&self)`.
     pub fn to_file(&self, outpath: &Path) -> Result<(), Error> {
         let mut file = File::create(outpath)?;
         file.write(self.to_string().as_bytes())?;
         Ok(())
+    }
+
+    /// Gets the planes from this file.
+    pub fn get_planes(&self) -> Vec<Plane> {
+        let mut planes: Vec<Plane> = self
+            .intensities
+            .chunks(self.n_luminous_intensities_per_cplane)
+            .zip(self.c_angles.iter())
+            .map(|(intens, c_angle)| {
+                let mut pl = Plane::new();
+                // First set the angle.
+                pl.set_angle(*c_angle);
+                // Set the angles of the plane from the angles in our C-Plane.
+                pl.set_angles(self.g_angles.clone());
+                // Set the intensities from this chunk of angles.
+                pl.set_intensities(Vec::from(intens));
+                // Set the flux units of the intensities.
+                pl.set_units(IntensityUnits::Candela);
+                // Set the units of the units.
+                pl.set_orientation(PlaneOrientation::Vertical);
+
+                pl
+            })
+            .collect();
+
+        // Now fill the planes if we have symmetry.
+        // Note that if we have spherical symmetry,
+        let mut tmp_planes = planes.clone();
+
+        // Fill the last 180 degrees of the plane from the C0-C180 plane contents.
+        if self.symmetry == EulumdatSymmetry::C0C180C90C270Plane {
+            tmp_planes.append(
+                &mut planes
+                    .into_iter()
+                    .rev()
+                    .skip(1)
+                    .map(|mut pl| {
+                        *pl.mut_angle() = (90.0 - pl.angle()) + 90.0;
+                        pl
+                    })
+                    .collect(),
+            );
+            planes = tmp_planes.clone();
+        }
+
+        // Fill the last 180 degrees of the plane from the C0-C180 plane contents.
+        if self.symmetry == EulumdatSymmetry::C0C180Plane
+            || self.symmetry == EulumdatSymmetry::C0C180C90C270Plane
+        {
+            let take_planes = planes.iter().count() - 2;
+            tmp_planes.append(
+                &mut planes
+                    .into_iter()
+                    .rev()
+                    .skip(1)
+                    .take(take_planes)
+                    .map(|mut pl| {
+                        *pl.mut_angle() = (180.0 - pl.angle()) + 180.0;
+                        pl
+                    })
+                    .collect(),
+            );
+            planes = tmp_planes.clone();
+        }
+
+        // On the other hand, let's generate the symmetry for the C90-C270 case.
+        if self.symmetry == EulumdatSymmetry::C90C270Plane {
+            let half = planes.iter().count() / 2;
+            // Assemble the first half (0 - 90)
+            tmp_planes = planes
+                .iter()
+                .skip(1)
+                .take(half)
+                .rev()
+                .map(|pl| {
+                    let mut new_plane = pl.clone();
+                    *new_plane.mut_angle() = 180.0 - pl.angle();
+                    new_plane
+                })
+                .collect();
+            // Now copy the C90 - C270 planes.
+            tmp_planes.append(&mut planes.clone());
+            // Now merge the C270 - C0 planes onto the end.
+            tmp_planes.append(
+                &mut planes
+                    .into_iter()
+                    .skip(half + 1)
+                    .take(half - 1)
+                    .rev()
+                    .map(|mut pl| {
+                        *pl.mut_angle() = pl.angle() + 2.0 * (270.0 - pl.angle());
+                        pl
+                    })
+                    .collect(),
+            );
+            planes = tmp_planes;
+        }
+
+        planes
     }
 }
 
@@ -528,5 +628,23 @@ impl ToString for EulumdatFile {
                     )
                     .as_ref()
             })
+    }
+}
+
+impl From<EulumdatFile> for PhotometricWeb {
+    fn from(eul: EulumdatFile) -> Self {
+        let mut photweb = PhotometricWeb::new();
+        // Get the angles.
+        photweb.set_planes(eul.get_planes());
+        photweb
+    }
+}
+
+//TODO: Implement conversion.
+impl PhotometricWebReader for EulumdatFile {
+    fn read(&self, path: &Path) -> Result<PhotometricWeb, Error> {
+        let eul_file = Self::parse_file(path)?;
+        let photweb: PhotometricWeb = eul_file.into();
+        Ok(photweb)
     }
 }
