@@ -4,3 +4,4 @@
 pub mod err;
 pub mod io;
 pub mod photweb;
+pub mod util;

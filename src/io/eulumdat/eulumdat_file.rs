@@ -1,8 +1,10 @@
 use super::err as ldt_err;
 use super::{util, EulumdatSymmetry, EulumdatType};
 use crate::photweb::{IntensityUnits, PhotometricWeb, Plane, PlaneOrientation};
+use crate::util::geom::degrees_to_radians;
 use crate::{err::Error, photweb::PhotometricWebReader};
 use property::Property;
+use std::f64::consts::{FRAC_2_PI, FRAC_PI_2, PI};
 use std::{
     default::Default,
     fs::File,
@@ -457,9 +459,14 @@ impl EulumdatFile {
             .map(|(intens, c_angle)| {
                 let mut pl = Plane::new();
                 // First set the angle.
-                pl.set_angle(*c_angle);
+                pl.set_angle(degrees_to_radians(*c_angle));
                 // Set the angles of the plane from the angles in our C-Plane.
-                pl.set_angles(self.g_angles.clone());
+                pl.set_angles(
+                    self.g_angles
+                        .iter()
+                        .map(|ang_deg| degrees_to_radians(*ang_deg))
+                        .collect::<Vec<f64>>(),
+                );
                 // Set the intensities from this chunk of angles.
                 pl.set_intensities(Vec::from(intens));
                 // Set the flux units of the intensities.
@@ -483,7 +490,7 @@ impl EulumdatFile {
                     .rev()
                     .skip(1)
                     .map(|mut pl| {
-                        *pl.mut_angle() = (90.0 - pl.angle()) + 90.0;
+                        *pl.mut_angle() = (FRAC_PI_2 - pl.angle()) + FRAC_PI_2;
                         pl
                     })
                     .collect(),
@@ -503,7 +510,7 @@ impl EulumdatFile {
                     .skip(1)
                     .take(take_planes)
                     .map(|mut pl| {
-                        *pl.mut_angle() = (180.0 - pl.angle()) + 180.0;
+                        *pl.mut_angle() = (PI - pl.angle()) + PI;
                         pl
                     })
                     .collect(),
@@ -522,7 +529,7 @@ impl EulumdatFile {
                 .rev()
                 .map(|pl| {
                     let mut new_plane = pl.clone();
-                    *new_plane.mut_angle() = 180.0 - pl.angle();
+                    *new_plane.mut_angle() = PI - pl.angle();
                     new_plane
                 })
                 .collect();
@@ -536,7 +543,7 @@ impl EulumdatFile {
                     .take(half - 1)
                     .rev()
                     .map(|mut pl| {
-                        *pl.mut_angle() = pl.angle() + 2.0 * (270.0 - pl.angle());
+                        *pl.mut_angle() = pl.angle() + 2.0 * (3.0 * FRAC_PI_2 - pl.angle());
                         pl
                     })
                     .collect(),

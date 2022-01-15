@@ -9,3 +9,6 @@ edition = "2021"
 property = "0.3.*"
 regex = "1.5.*"
 num_enum = "0.5.*"
+
+[dev-dependencies]
+approx="0.5.*"
