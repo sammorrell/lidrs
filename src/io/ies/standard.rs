@@ -1,7 +1,3 @@
-use std::fmt::write;
-
-use super::IesFile;
-
 /// A list of possible IES standards.
 #[derive(Debug, PartialEq, Eq)]
 pub enum IesStandard {

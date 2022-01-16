@@ -4,7 +4,7 @@ use crate::photweb::{IntensityUnits, PhotometricWeb, Plane, PlaneOrientation};
 use crate::util::geom::degrees_to_radians;
 use crate::{err::Error, photweb::PhotometricWebReader};
 use property::Property;
-use std::f64::consts::{FRAC_2_PI, FRAC_PI_2, PI};
+use std::f64::consts::{FRAC_PI_2, PI};
 use std::{
     default::Default,
     fs::File,

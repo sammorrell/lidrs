@@ -6,13 +6,12 @@
 //! - The KeyLights Appendix B file specification (courtesy of Transoft solutions): https://keysofthelp.transoftsolutions.com/KeyLIGHTS/6.3/Appendix%20B%20EULUMDAT%20File%20Format.htm
 //! - Documentation by Paul Bourke: http://paulbourke.net/dataformats/ldt/
 
-pub mod cplane;
 pub mod err;
 pub mod eulumdat_file;
 pub mod ltyp;
 pub mod symmetry;
 pub mod util;
-pub use self::{cplane::*, err::*, eulumdat_file::*, ltyp::*, symmetry::*, util::*};
+pub use self::{err::*, eulumdat_file::*, ltyp::*, symmetry::*, util::*};
 
 #[cfg(test)]
 pub mod tests;

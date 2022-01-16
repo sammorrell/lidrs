@@ -1,5 +1,5 @@
 use super::{EulumdatFile, EulumdatSymmetry};
-use crate::{photweb::PhotometricWeb, util::geom::degrees_to_radians};
+use crate::photweb::PhotometricWeb;
 use approx::assert_relative_eq;
 use std::path::Path;
 
