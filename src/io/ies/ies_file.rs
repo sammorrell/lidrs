@@ -1,6 +1,6 @@
 use super::err as ies_err;
-use super::{standard::IesStandard, tilt::Tilt};
-use crate::photweb;
+use super::lum_opening::IesLuminousOpening;
+use super::{phot_type::IesPhotometryType, standard::IesStandard, tilt::Tilt};
 use crate::{
     err::Error,
     photweb::{PhotometricWeb, PhotometricWebReader},
@@ -13,6 +13,7 @@ use std::{
     fs::File,
     io::{BufReader, Read, Write},
     path::Path,
+    rc::Rc,
 };
 
 pub const DELIMITERS_PATTERN: &str = "[ ]+|,|[\r\n]";
@@ -61,26 +62,26 @@ pub struct IesFile {
 
     // First line of parameters
     n_lamps: usize,
-    lumens_per_lamp: f32,
-    candela_multiplying_factor: f32,
+    lumens_per_lamp: f64,
+    candela_multiplying_factor: f64,
     n_vertical_angles: usize,
     n_horizontal_angles: usize,
-    photometric_type: usize,
+    photometric_type: IesPhotometryType,
     luminous_opening_units: LuminousOpeningUnits,
-    luminous_opening_width: f32,
-    luminous_opening_length: f32,
-    luminous_opening_height: f32,
+    luminous_opening_width: f64,
+    luminous_opening_length: f64,
+    luminous_opening_height: f64,
 
     // Second line of parameters.
-    ballast_factor: f32,
-    input_watts: f32,
+    ballast_factor: f64,
+    input_watts: f64,
 
     // Angles
-    vertical_angles: Vec<f32>,
-    horizontal_angles: Vec<f32>,
+    vertical_angles: Vec<f64>,
+    horizontal_angles: Vec<f64>,
 
     // Brightness vaulues, measured in candellas.
-    candela_values: Vec<f32>,
+    candela_values: Vec<f64>,
 }
 
 impl IesFile {
@@ -331,11 +332,16 @@ impl IesFile {
                             Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err))
                         }
                     },
-                    5 => match item.parse() {
-                        Ok(val) => {
-                            self.photometric_type = val;
-                            Ok(())
-                        }
+                    5 => match item.parse::<usize>() {
+                        Ok(val) => match val.try_into() {
+                            Ok(phottype) => {
+                                self.photometric_type = phottype;
+                                Ok(())
+                            }
+                            Err(err) => {
+                                Err(ies_err::Error::FromPrimitiveError(*iline, Rc::new(err)))
+                            }
+                        },
                         Err(err) => {
                             Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err))
                         }
@@ -476,7 +482,7 @@ impl IesFile {
     /// - Completely in the bottom hemisphere: first angles and 0 degrees and 90 degress respectively.
     /// - Completely in the top hemisphere: first angles and 90 degrees and 180 degress respectively.
     /// - Otherwise: first angles and 0 degrees and 180 degress respectively.
-    pub fn vertical_angles_valid(angles: &Vec<f32>) -> bool {
+    pub fn vertical_angles_valid(angles: &Vec<f64>) -> bool {
         match angles.first() {
             Some(first) => match first {
                 x if *x == 0.0 => match angles.last() {
@@ -507,7 +513,7 @@ impl IesFile {
     /// - If the last value is 180.0 degress, the distribution is symmetric about a vertical plane.
     /// - If the last value is greater than 180.0 and less than or equal to 360.0, no lateral symmetries.
     /// - Hence, the valid last values are: 0.0, 90.0, 180.0 - 360.0.  
-    pub fn horizontal_angles_valid(angles: &Vec<f32>) -> bool {
+    pub fn horizontal_angles_valid(angles: &Vec<f64>) -> bool {
         match angles.first() {
             Some(first) => match first {
                 x if *x == 0.0 => match angles.last() {
@@ -541,6 +547,15 @@ impl IesFile {
                 accum + &format!("[{}] {}\n", key, val)
             })
     }
+
+    /// Get the type and properties of the luminous opening.
+    pub fn get_luminous_opening(&self) -> IesLuminousOpening {
+        IesLuminousOpening::from_dimensions(
+            self.luminous_opening_width,
+            self.luminous_opening_length,
+            self.luminous_opening_height,
+        )
+    }
 }
 
 impl ToString for IesFile {
@@ -571,7 +586,7 @@ impl ToString for IesFile {
             self.candela_multiplying_factor,
             self.n_vertical_angles,
             self.n_horizontal_angles,
-            self.photometric_type,
+            (self.photometric_type.clone() as usize),
             self.luminous_opening_units,
             self.luminous_opening_width,
             self.luminous_opening_length,

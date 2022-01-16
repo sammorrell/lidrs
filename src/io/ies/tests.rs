@@ -1,3 +1,5 @@
+use crate::io::ies::lum_opening::IesLuminousOpening;
+
 use super::{IesFile, LuminousOpeningUnits};
 
 const IESNA_1991_FILE: &str = "IESNA91
@@ -177,4 +179,169 @@ fn parse_properties_test() {
         }
         Err(e) => assert!(false, "Properties parse error: {}", e),
     }
+}
+
+#[test]
+/// In this test we will run through each case in turn and check that we get the correct result.
+fn test_get_luminous_opening() {
+    let mut ies = IesFile::new();
+
+    // Point
+    assert_eq!(ies.get_luminous_opening(), IesLuminousOpening::Point);
+
+    // Rectangular
+    ies.set_luminous_opening_width(1.0);
+    ies.set_luminous_opening_length(1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::Rectangular {
+            width: 1.0,
+            length: 1.0
+        }
+    );
+
+    // Rectangular with luminous sides.
+    ies.set_luminous_opening_height(1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::RectanguarLuminousSides {
+            width: 1.0,
+            length: 1.0,
+            height: 1.0
+        }
+    );
+
+    // Circular
+    ies.set_luminous_opening_width(-1.0);
+    ies.set_luminous_opening_length(-1.0);
+    ies.set_luminous_opening_height(0.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::Circular { diameter: 1.0 }
+    );
+
+    // Ellipse
+    ies.set_luminous_opening_length(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::Ellipse {
+            width: 1.0,
+            length: 2.0
+        }
+    );
+
+    // Vertical Cylinder
+    ies.set_luminous_opening_length(-1.0);
+    ies.set_luminous_opening_height(1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::VerticalCylinder {
+            diameter: 1.0,
+            height: 1.0
+        }
+    );
+
+    // Vertical Ellipsoidal Cylinder
+    ies.set_luminous_opening_length(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::VerticalEllipsoidalCylinder {
+            width: 1.0,
+            length: 2.0,
+            height: 1.0
+        }
+    );
+
+    // Sphere
+    ies.set_luminous_opening_length(-1.0);
+    ies.set_luminous_opening_height(-1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::Sphere { diameter: 1.0 }
+    );
+
+    // Ellipsoidal Spheroid
+    ies.set_luminous_opening_height(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::EllipsoidalSpheroid {
+            width: 1.0,
+            length: 1.0,
+            height: 2.0
+        }
+    );
+    ies.set_luminous_opening_width(-3.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::EllipsoidalSpheroid {
+            width: 3.0,
+            length: 1.0,
+            height: 2.0
+        }
+    );
+
+    // Horizontal Cylinder along Photometric Horizontal
+    ies.set_luminous_opening_width(-1.0);
+    ies.set_luminous_opening_length(1.0);
+    ies.set_luminous_opening_height(-1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::HorizontalCylinderAlong {
+            diameter: 1.0,
+            length: 1.0
+        }
+    );
+
+    // Horizontal Ellipsoidal Cylinder Along Photometric Horizontal
+    ies.set_luminous_opening_height(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::HorizontalEllipsoidalCylinderAlong {
+            width: 1.0,
+            length: 1.0,
+            height: 2.0
+        }
+    );
+
+    // Horizontal Cylinder Perpendicular to Photometric Horizontal
+    ies.set_luminous_opening_width(1.0);
+    ies.set_luminous_opening_length(-1.0);
+    ies.set_luminous_opening_height(-1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::HorizontalCylinderPerpendicular {
+            width: 1.0,
+            diameter: 1.0
+        }
+    );
+
+    // Horizontal Ellipsoidal Cylinder Perpendicular to Photometric Horizontal
+    ies.set_luminous_opening_height(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::HorizontalEllipsoidalCylinderPerpendicular {
+            width: 1.0,
+            length: 1.0,
+            height: 2.0
+        }
+    );
+
+    // Vertical Circle Facing Photometric Horizontal
+    ies.set_luminous_opening_width(-1.0);
+    ies.set_luminous_opening_length(0.0);
+    ies.set_luminous_opening_height(-1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::VerticalCircle { diameter: 1.0 }
+    );
+
+    // Vertical Ellipse Facing Photometric Horizontal
+    ies.set_luminous_opening_height(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::VerticalEllipse {
+            width: 1.0,
+            height: 2.0
+        }
+    );
 }

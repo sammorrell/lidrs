@@ -1,6 +1,6 @@
+use crate::util::geom::radians_to_degrees;
 use property::Property;
 use std::default::Default;
-use crate::util::geom::radians_to_degrees;
 
 use super::units::IntensityUnits;
 
@@ -20,13 +20,13 @@ impl Default for PlaneOrientation {
 pub struct Plane {
     /// The angle of the plane, stored in radians.
     angle: f64,
-    /// The orientation of the plane. 
+    /// The orientation of the plane.
     orientation: PlaneOrientation,
     /// A vector containing angles within the plane, stored in radians
     angles: Vec<f64>,
     /// A vector containing intensities, stored in the units indicated in the `units` field.
     intensities: Vec<f64>,
-    /// The units in which the luminous intensities are stored. 
+    /// The units in which the luminous intensities are stored.
     units: IntensityUnits,
 }
 
@@ -38,7 +38,7 @@ impl Plane {
         }
     }
 
-    /// Get the angle of the plane in degrees. 
+    /// Get the angle of the plane in degrees.
     pub fn angle_deg(&self) -> f64 {
         radians_to_degrees(self.angle)
     }
@@ -53,6 +53,4 @@ impl Plane {
 }
 
 #[cfg(test)]
-mod tests {
-
-}
+mod tests {}

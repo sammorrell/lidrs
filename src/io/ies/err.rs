@@ -16,6 +16,7 @@ pub enum Error {
     HorizontalAnglesInvalid(usize),
     UnexpectedEndOfFile(usize),
     UnexpectedIitem(usize, usize, usize),
+    FromPrimitiveError(usize, Rc<dyn std::error::Error>),
 }
 
 impl Display for Error {
@@ -80,6 +81,9 @@ impl Display for Error {
                         "Line {}: Expected {} items, found {}. ",
                         iline, expected, actual
                     )
+                }
+                Error::FromPrimitiveError(ref iline, ref err) => {
+                    format!("Error converting from primitive on line {}: {}", iline, err)
                 }
             }
         })

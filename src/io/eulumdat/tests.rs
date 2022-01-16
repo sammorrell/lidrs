@@ -1,12 +1,7 @@
-use approx::assert_relative_eq;
-use crate::{
-    photweb::PhotometricWeb,
-    util::geom::degrees_to_radians
-};
 use super::{EulumdatFile, EulumdatSymmetry};
-use std::{
-    path::Path,
-};
+use crate::{photweb::PhotometricWeb, util::geom::degrees_to_radians};
+use approx::assert_relative_eq;
+use std::path::Path;
 
 /// Example file provided by Paul Bourne's documentation:
 /// http://paulbourke.net/dataformats/ldt/
@@ -98,14 +93,14 @@ fn test_get_planes_c0c180_symmetry() {
     // Check that all of the planes are filled with the correct angle.
     let _ = vec![
         0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0,
-        140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 200.0, 210.0, 220.0, 230.0, 240.0, 250.0,
-        260.0, 270.0, 280.0, 290.0, 300.0, 310.0, 320.0, 330.0, 340.0, 350.0
+        140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 200.0, 210.0, 220.0, 230.0, 240.0, 250.0, 260.0,
+        270.0, 280.0, 290.0, 300.0, 310.0, 320.0, 330.0, 340.0, 350.0,
     ]
-        .iter()
-        .zip(photweb.planes())
-        .map(|(test, pl)| assert_relative_eq!(pl.angle_deg(), test, epsilon=1E-6))
-        .collect::<Vec<_>>();
-    
+    .iter()
+    .zip(photweb.planes())
+    .map(|(test, pl)| assert_relative_eq!(pl.angle_deg(), test, epsilon = 1E-6))
+    .collect::<Vec<_>>();
+
     // Check that the angles have ended up where we expect them to.
     assert_eq!(
         photweb
@@ -150,13 +145,13 @@ fn test_get_planes_c90c270_symmetry() {
     // Check that all of the planes are filled with the correct angle.
     let _ = vec![
         0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0,
-        140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 200.0, 210.0, 220.0, 230.0, 240.0, 250.0,
-        260.0, 270.0, 280.0, 290.0, 300.0, 310.0, 320.0, 330.0, 340.0, 350.0
+        140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 200.0, 210.0, 220.0, 230.0, 240.0, 250.0, 260.0,
+        270.0, 280.0, 290.0, 300.0, 310.0, 320.0, 330.0, 340.0, 350.0,
     ]
-        .iter()
-        .zip(photweb.planes())
-        .map(|(test, pl)| assert_relative_eq!(pl.angle_deg(), test, epsilon=1E-6))
-        .collect::<Vec<_>>();
+    .iter()
+    .zip(photweb.planes())
+    .map(|(test, pl)| assert_relative_eq!(pl.angle_deg(), test, epsilon = 1E-6))
+    .collect::<Vec<_>>();
 
     // Check that the angles have ended up where we expect them to.
     assert_eq!(
@@ -203,14 +198,14 @@ fn test_get_planes_c0c180c90c270_symmetry() {
 
     let _ = vec![
         0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0,
-        140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 200.0, 210.0, 220.0, 230.0, 240.0, 250.0,
-        260.0, 270.0, 280.0, 290.0, 300.0, 310.0, 320.0, 330.0, 340.0, 350.0
+        140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 200.0, 210.0, 220.0, 230.0, 240.0, 250.0, 260.0,
+        270.0, 280.0, 290.0, 300.0, 310.0, 320.0, 330.0, 340.0, 350.0,
     ]
-        .iter()
-        .zip(photweb.planes())
-        .map(|(test, pl)| assert_relative_eq!(pl.angle_deg(), test, epsilon=1E-6))
-        .collect::<Vec<_>>();
-        
+    .iter()
+    .zip(photweb.planes())
+    .map(|(test, pl)| assert_relative_eq!(pl.angle_deg(), test, epsilon = 1E-6))
+    .collect::<Vec<_>>();
+
     // Check that the angles have ended up where we expect them to.
     assert_eq!(
         photweb
