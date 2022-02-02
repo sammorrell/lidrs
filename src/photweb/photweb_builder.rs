@@ -27,8 +27,8 @@ impl PhotometricWebBuilder {
             Some(file_ext) => match file_ext.to_str() {
                 None => Err(Error::InvalidFileType(String::new())),
                 Some(file_ext) => match file_ext {
-                    "ldt" => Ok(Box::new(io::eulumdat::EulumdatFile::new())),
-                    "eul" => Ok(Box::new(io::eulumdat::EulumdatFile::new())),
+                    "ldt" => Ok(Box::<io::eulumdat::EulumdatFile>::new(io::eulumdat::EulumdatFile::new())),
+                    "eul" => Ok(Box::<io::eulumdat::EulumdatFile>::new(io::eulumdat::EulumdatFile::new())),
                     "ies" => Ok(Box::new(io::ies::IesFile::new())),
                     _ => Err(Error::InvalidFileType(file_ext.to_owned())),
                 },

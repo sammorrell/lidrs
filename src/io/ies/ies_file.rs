@@ -1,6 +1,7 @@
 use super::err as ies_err;
 use super::lum_opening::IesLuminousOpening;
 use super::{phot_type::IesPhotometryType, standard::IesStandard, tilt::Tilt};
+use crate::photweb::Plane;
 use crate::{
     err::Error,
     photweb::{PhotometricWeb, PhotometricWebReader},
@@ -556,6 +557,15 @@ impl IesFile {
             self.luminous_opening_height,
         )
     }
+
+    /// Gets the planes from this object.
+    pub fn get_planes(&self) -> Vec<Plane> {
+        match self.photometric_type {
+            IesPhotometryType::TypeA => vec![],
+            IesPhotometryType::TypeB => vec![],
+            IesPhotometryType::TypeC => vec![],
+        }
+    }
 }
 
 impl ToString for IesFile {
@@ -623,7 +633,8 @@ impl ToString for IesFile {
 
 impl From<IesFile> for PhotometricWeb {
     fn from(ies: IesFile) -> Self {
-        let photweb = PhotometricWeb::new();
+        let mut photweb = PhotometricWeb::new();
+        photweb.set_planes(ies.get_planes());
         photweb
     }
 }

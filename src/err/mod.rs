@@ -1,3 +1,4 @@
+//! Error module.
 use std::fmt::Display;
 
 #[derive(Debug)]
