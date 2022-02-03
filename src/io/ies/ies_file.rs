@@ -1,10 +1,10 @@
 use super::err as ies_err;
 use super::lum_opening::IesLuminousOpening;
 use super::{phot_type::IesPhotometryType, standard::IesStandard, tilt::Tilt};
-use crate::photweb::Plane;
+use crate::photweb::{Plane, mirror_first_quadrant, mirror_first_hemisphere};
 use crate::{
     err::Error,
-    photweb::{PhotometricWeb, PhotometricWebReader},
+    photweb::{IntensityUnits, PhotometricWeb, PhotometricWebReader, PlaneOrientation},
 };
 use property::Property;
 use regex::Regex;
@@ -15,11 +15,12 @@ use std::{
     io::{BufReader, Read, Write},
     path::Path,
     rc::Rc,
+    f64::consts::{PI, FRAC_PI_2}
 };
 
 pub const DELIMITERS_PATTERN: &str = "[ ]+|,|[\r\n]";
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LuminousOpeningUnits {
     Feet = 1,
     Meters = 2,
@@ -55,7 +56,7 @@ impl std::fmt::Display for LuminousOpeningUnits {
 }
 
 #[allow(dead_code)]
-#[derive(Default, Debug, Property)]
+#[derive(Default, Clone, Debug, Property)]
 pub struct IesFile {
     standard: IesStandard,
     keywords: HashMap<String, String>,
@@ -561,10 +562,54 @@ impl IesFile {
     /// Gets the planes from this object.
     pub fn get_planes(&self) -> Vec<Plane> {
         match self.photometric_type {
-            IesPhotometryType::TypeA => vec![],
-            IesPhotometryType::TypeB => vec![],
-            IesPhotometryType::TypeC => vec![],
+            IesPhotometryType::TypeA => self.get_planes_type_a(),
+            IesPhotometryType::TypeB => self.get_planes_type_b(),
+            IesPhotometryType::TypeC => self.get_planes_type_c(),
         }
+    }
+
+    /// Get the planes from a Type A photometry IES file.
+    pub fn get_planes_type_a(&self) -> Vec<Plane> {
+        todo!()
+    }
+
+    /// Get the planes from a Type A photometry IES file.
+    pub fn get_planes_type_b(&self) -> Vec<Plane> {
+        todo!()
+    }
+
+    /// Get the planes from a Type C photometry IES file.
+    pub fn get_planes_type_c(&self) -> Vec<Plane> {
+        // Chunk the intensities into the planes, and give them appropriate angles.
+        let mut planes = self
+            .candela_values
+            .chunks(self.n_vertical_angles)
+            .enumerate()
+            .map(|(iplane, intensities_candelas)| {
+                let mut curr_plane = Plane::new();
+                curr_plane.set_angle_degrees(self.horizontal_angles[iplane]);
+                curr_plane.set_orientation(PlaneOrientation::Vertical);
+                curr_plane.set_intensities(Vec::from(intensities_candelas));
+                curr_plane.set_angles_degrees(&self.vertical_angles);
+                curr_plane.set_units(IntensityUnits::Candela);
+                curr_plane
+            })
+            .collect::<Vec<Plane>>();
+        
+        // Now resolve the symmetries.
+        // First, check if we have the first quadrant filled (from 0 -> 90 deg).
+        // If so, mirror this to fill the 0 -> 180 degree hemisphere. 
+        if (planes.iter().last().unwrap().angle() - (PI / 2.0)).abs() <= f64::EPSILON {
+            planes = mirror_first_quadrant(&planes);
+        }
+
+        // Now, check to see if we have the first hemisphere (0 -> 180 deg). 
+        // If so mirror this to fill the final hemisphere.
+        if (planes.iter().last().unwrap().angle() - (PI)).abs() <= f64::EPSILON {
+            planes = mirror_first_hemisphere(&planes);
+        }
+
+        planes
     }
 }
 

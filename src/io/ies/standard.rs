@@ -1,5 +1,5 @@
 /// A list of possible IES standards.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IesStandard {
     Iesna1986,
     Iesna1991,
@@ -17,7 +17,7 @@ impl From<&str> for IesStandard {
     /// This converts the header string of the file into a known standard.
     /// The default case will catch anything that
     fn from(str: &str) -> Self {
-        match str {
+        match str.replace(" ", "").as_str() {
             "IESNA91" => IesStandard::Iesna1991,
             "IESNA:LM-63-1995" => IesStandard::Iesna1995,
             "IESNA:LM-63-2002" => IesStandard::Iesna2002,

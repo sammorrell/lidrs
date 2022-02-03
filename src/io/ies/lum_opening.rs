@@ -62,7 +62,7 @@ pub enum IesLuminousOpening {
 }
 
 impl IesLuminousOpening {
-    // Get the type and properties of the luminous opening from the supplied width, lenght and height. 
+    // Get the type and properties of the luminous opening from the supplied width, lenght and height.
     pub fn from_dimensions(width: f64, length: f64, height: f64) -> Self {
         // Check for the easy case first - point source.
         if width == 0. && length == 0. && height == 0. {
@@ -169,7 +169,10 @@ mod tests {
     /// In this test we will run through each case in turn and check that we get the correct result.
     fn test_from_dimensions() {
         // Point
-        assert_eq!(IesLuminousOpening::from_dimensions(0.0, 0.0, 0.0), IesLuminousOpening::Point);
+        assert_eq!(
+            IesLuminousOpening::from_dimensions(0.0, 0.0, 0.0),
+            IesLuminousOpening::Point
+        );
 
         // Rectangular
         assert_eq!(
@@ -286,7 +289,7 @@ mod tests {
             }
         );
 
-        // Vertical Circle Facing Photometric Horizontal 
+        // Vertical Circle Facing Photometric Horizontal
         assert_eq!(
             IesLuminousOpening::from_dimensions(-1.0, 0.0, -1.0),
             IesLuminousOpening::VerticalCircle { diameter: 1.0 }

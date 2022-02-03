@@ -1,6 +1,9 @@
 use super::err as ldt_err;
 use super::{util, EulumdatSymmetry, EulumdatType};
-use crate::photweb::{IntensityUnits, PhotometricWeb, Plane, PlaneOrientation};
+use crate::photweb::{
+    mirror_first_hemisphere, mirror_first_quadrant, IntensityUnits, PhotometricWeb, Plane,
+    PlaneOrientation, mirror_second_and_third_quadrants,
+};
 use crate::util::geom::degrees_to_radians;
 use crate::{err::Error, photweb::PhotometricWebReader};
 use property::Property;
@@ -479,76 +482,21 @@ impl EulumdatFile {
             .collect();
 
         // Now fill the planes if we have symmetry.
-        // Note that if we have spherical symmetry,
-        let mut tmp_planes = planes.clone();
-
         // Fill the last 180 degrees of the plane from the C0-C180 plane contents.
         if self.symmetry == EulumdatSymmetry::C0C180C90C270Plane {
-            tmp_planes.append(
-                &mut planes
-                    .into_iter()
-                    .rev()
-                    .skip(1)
-                    .map(|mut pl| {
-                        *pl.mut_angle() = (FRAC_PI_2 - pl.angle()) + FRAC_PI_2;
-                        pl
-                    })
-                    .collect(),
-            );
-            planes = tmp_planes.clone();
+            planes = mirror_first_quadrant(&planes);
         }
 
         // Fill the last 180 degrees of the plane from the C0-C180 plane contents.
         if self.symmetry == EulumdatSymmetry::C0C180Plane
             || self.symmetry == EulumdatSymmetry::C0C180C90C270Plane
         {
-            let take_planes = planes.iter().count() - 2;
-            tmp_planes.append(
-                &mut planes
-                    .into_iter()
-                    .rev()
-                    .skip(1)
-                    .take(take_planes)
-                    .map(|mut pl| {
-                        *pl.mut_angle() = (PI - pl.angle()) + PI;
-                        pl
-                    })
-                    .collect(),
-            );
-            planes = tmp_planes.clone();
+            planes = mirror_first_hemisphere(&planes);
         }
 
         // On the other hand, let's generate the symmetry for the C90-C270 case.
         if self.symmetry == EulumdatSymmetry::C90C270Plane {
-            let half = planes.iter().count() / 2;
-            // Assemble the first half (0 - 90)
-            tmp_planes = planes
-                .iter()
-                .skip(1)
-                .take(half)
-                .rev()
-                .map(|pl| {
-                    let mut new_plane = pl.clone();
-                    *new_plane.mut_angle() = PI - pl.angle();
-                    new_plane
-                })
-                .collect();
-            // Now copy the C90 - C270 planes.
-            tmp_planes.append(&mut planes.clone());
-            // Now merge the C270 - C0 planes onto the end.
-            tmp_planes.append(
-                &mut planes
-                    .into_iter()
-                    .skip(half + 1)
-                    .take(half - 1)
-                    .rev()
-                    .map(|mut pl| {
-                        *pl.mut_angle() = pl.angle() + 2.0 * (3.0 * FRAC_PI_2 - pl.angle());
-                        pl
-                    })
-                    .collect(),
-            );
-            planes = tmp_planes;
+            planes = mirror_second_and_third_quadrants(&planes);
         }
 
         planes

@@ -4,9 +4,9 @@
 //! There are currently implemented parsers for:
 //! - EULUMDAT (.ldt / .eul) formatted ASCII files.
 //! - Illuminating Engineering Society (.ies) formatted ASCII files.
-//! 
+//!
 //! It is also able to interpret these files to produce a full spherical photometric web from the inputs.
-//! 
+//!
 
 pub mod err;
 pub mod io;

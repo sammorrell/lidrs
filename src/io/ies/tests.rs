@@ -1,4 +1,4 @@
-use crate::io::ies::lum_opening::IesLuminousOpening;
+use crate::{io::ies::lum_opening::IesLuminousOpening, photweb::PhotometricWeb};
 
 use super::{IesFile, LuminousOpeningUnits};
 
@@ -344,4 +344,28 @@ fn test_get_luminous_opening() {
             height: 2.0
         }
     );
+}
+
+/// Example file provided by Annex C of IES spec.
+const EXAMPLE_IESNA2002_TYPEC: &str = include_str!("iesna2002_example_typec.ies");
+
+/// Check that we can perform a basic conversion from an IES formatted file
+/// to a `PhotometricWeb`, making sure to check that the symmetries are being
+/// correclty resolved and dealy with for Type C photometry. 
+#[test]
+fn test_photweb_from_ies_typec() {
+    let mut ies = IesFile::new();
+    match ies.parse(&EXAMPLE_IESNA2002_TYPEC.to_owned()) {
+        Err(e) => assert!(false, "Parse error: {}", e),
+        Ok(_) => {
+            let photweb: PhotometricWeb = ies.clone().into();
+
+            // Check that we have the correct number of planes for angles.
+            // This should consider that the symmetries are correctly resolved 
+            // into the full photometric web.
+            assert_eq!(photweb.n_planes(), 8);
+
+            println!("{:?}", photweb);
+        }
+    }
 }
