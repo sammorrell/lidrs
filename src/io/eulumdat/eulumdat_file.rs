@@ -7,7 +7,6 @@ use crate::photweb::{
 use crate::util::geom::degrees_to_radians;
 use crate::{err::Error, photweb::PhotometricWebReader};
 use property::Property;
-use std::f64::consts::{FRAC_PI_2, PI};
 use std::{
     default::Default,
     fs::File,

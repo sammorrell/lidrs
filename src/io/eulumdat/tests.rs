@@ -66,7 +66,6 @@ fn test_ldt_into_photweb() {
 #[test]
 fn test_get_planes_c0c180_symmetry() {
     let mut ldt = EulumdatFile::new();
-    let mut photweb = PhotometricWeb::new();
     ldt.set_n_cplanes(18 as usize);
     ldt.set_c_angles(
         (0..190)
@@ -85,7 +84,7 @@ fn test_get_planes_c0c180_symmetry() {
     ldt.set_symmetry(EulumdatSymmetry::C0C180Plane);
 
     // Perform the conversion.
-    photweb = ldt.clone().into();
+    let photweb: PhotometricWeb = ldt.clone().into();
 
     // Check that we have the correct number of angles.
     assert_eq!(photweb.planes().iter().count(), 36);
@@ -120,7 +119,6 @@ fn test_get_planes_c0c180_symmetry() {
 #[test]
 fn test_get_planes_c90c270_symmetry() {
     let mut ldt = EulumdatFile::new();
-    let mut photweb = PhotometricWeb::new();
     ldt.set_n_cplanes(18 as usize);
     ldt.set_c_angles(
         (90..280)
@@ -138,7 +136,7 @@ fn test_get_planes_c90c270_symmetry() {
     );
     ldt.set_symmetry(EulumdatSymmetry::C90C270Plane);
     // Perform the conversation.
-    photweb = ldt.clone().into();
+    let photweb: PhotometricWeb = ldt.clone().into();
 
     // Check that we have the correct number of angles.
     assert_eq!(photweb.planes().iter().count(), 36);
@@ -172,7 +170,6 @@ fn test_get_planes_c90c270_symmetry() {
 #[test]
 fn test_get_planes_c0c180c90c270_symmetry() {
     let mut ldt = EulumdatFile::new();
-    let mut photweb = PhotometricWeb::new();
     ldt.set_n_cplanes(9 as usize);
     ldt.set_c_angles(
         (0..100)
@@ -191,7 +188,7 @@ fn test_get_planes_c0c180c90c270_symmetry() {
     ldt.set_symmetry(EulumdatSymmetry::C0C180C90C270Plane);
 
     // Perform the conversion.
-    photweb = ldt.clone().into();
+    let photweb: PhotometricWeb = ldt.clone().into();
 
     // Check that we have the correct number of angles.
     assert_eq!(photweb.planes().iter().count(), 36);
@@ -225,7 +222,6 @@ fn test_get_planes_c0c180c90c270_symmetry() {
 #[test]
 fn test_get_planes_spherical_symmetry() {
     let mut ldt = EulumdatFile::new();
-    let mut photweb = PhotometricWeb::new();
     ldt.set_n_cplanes(1 as usize);
     ldt.set_c_angles(vec![0.0]);
     ldt.set_g_angles(vec![0.0]);
@@ -234,7 +230,7 @@ fn test_get_planes_spherical_symmetry() {
     ldt.set_symmetry(EulumdatSymmetry::AboutVerticalAxis);
 
     // Perform the conversion.
-    photweb = ldt.clone().into();
+    let photweb: PhotometricWeb = ldt.clone().into();
 
     // Check that we have the correct number of angles.
     assert_eq!(photweb.planes().iter().count(), 1);

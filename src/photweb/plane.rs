@@ -1,6 +1,6 @@
 use crate::util::geom::{degrees_to_radians, radians_to_degrees};
 use property::Property;
-use std::{default::Default, iter};
+use std::{default::Default};
 
 use super::units::IntensityUnits;
 

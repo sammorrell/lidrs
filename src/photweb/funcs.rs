@@ -39,11 +39,10 @@ pub fn mirror_first_hemisphere(planes: &Vec<Plane>) -> Vec<Plane> {
 /// A utility function which takes the hemisphere occupying the second and third quadrants (90 degree - 270 degree)
 /// and mirrors this onto the opposing (270 degree -> 90 degree) hemisphere. 
 pub fn mirror_second_and_third_quadrants(planes: &Vec<Plane>) -> Vec<Plane> {
-    let mut ret_planes = planes.clone();
     let half = planes.iter().count() / 2;
 
     // Assemble the first quadrant from the data we have. 
-    ret_planes = planes
+    let mut ret_planes: Vec<Plane> = planes
     .iter()
     .skip(1)
     .take(half)

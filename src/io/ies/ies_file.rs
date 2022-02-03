@@ -15,7 +15,7 @@ use std::{
     io::{BufReader, Read, Write},
     path::Path,
     rc::Rc,
-    f64::consts::{PI, FRAC_PI_2}
+    f64::consts::{PI}
 };
 
 pub const DELIMITERS_PATTERN: &str = "[ ]+|,|[\r\n]";
