@@ -1,6 +1,11 @@
 use super::err as ies_err;
-use super::{standard::IesStandard, tilt::Tilt};
-use crate::err::Error;
+use super::lum_opening::IesLuminousOpening;
+use super::{phot_type::IesPhotometryType, standard::IesStandard, tilt::Tilt};
+use crate::photweb::{Plane, mirror_first_quadrant, mirror_first_hemisphere};
+use crate::{
+    err::Error,
+    photweb::{IntensityUnits, PhotometricWeb, PhotometricWebReader, PlaneOrientation},
+};
 use property::Property;
 use regex::Regex;
 use std::{
@@ -9,11 +14,13 @@ use std::{
     fs::File,
     io::{BufReader, Read, Write},
     path::Path,
+    rc::Rc,
+    f64::consts::{PI}
 };
 
 pub const DELIMITERS_PATTERN: &str = "[ ]+|,|[\r\n]";
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LuminousOpeningUnits {
     Feet = 1,
     Meters = 2,
@@ -49,7 +56,7 @@ impl std::fmt::Display for LuminousOpeningUnits {
 }
 
 #[allow(dead_code)]
-#[derive(Default, Debug, Property)]
+#[derive(Default, Clone, Debug, Property)]
 pub struct IesFile {
     standard: IesStandard,
     keywords: HashMap<String, String>,
@@ -57,26 +64,26 @@ pub struct IesFile {
 
     // First line of parameters
     n_lamps: usize,
-    lumens_per_lamp: f32,
-    candela_multiplying_factor: f32,
+    lumens_per_lamp: f64,
+    candela_multiplying_factor: f64,
     n_vertical_angles: usize,
     n_horizontal_angles: usize,
-    photometric_type: usize,
+    photometric_type: IesPhotometryType,
     luminous_opening_units: LuminousOpeningUnits,
-    luminous_opening_width: f32,
-    luminous_opening_length: f32,
-    luminous_opening_height: f32,
+    luminous_opening_width: f64,
+    luminous_opening_length: f64,
+    luminous_opening_height: f64,
 
     // Second line of parameters.
-    ballast_factor: f32,
-    input_watts: f32,
+    ballast_factor: f64,
+    input_watts: f64,
 
     // Angles
-    vertical_angles: Vec<f32>,
-    horizontal_angles: Vec<f32>,
+    vertical_angles: Vec<f64>,
+    horizontal_angles: Vec<f64>,
 
     // Brightness vaulues, measured in candellas.
-    candela_values: Vec<f32>,
+    candela_values: Vec<f64>,
 }
 
 impl IesFile {
@@ -327,11 +334,16 @@ impl IesFile {
                             Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err))
                         }
                     },
-                    5 => match item.parse() {
-                        Ok(val) => {
-                            self.photometric_type = val;
-                            Ok(())
-                        }
+                    5 => match item.parse::<usize>() {
+                        Ok(val) => match val.try_into() {
+                            Ok(phottype) => {
+                                self.photometric_type = phottype;
+                                Ok(())
+                            }
+                            Err(err) => {
+                                Err(ies_err::Error::FromPrimitiveError(*iline, Rc::new(err)))
+                            }
+                        },
                         Err(err) => {
                             Err(ies_err::Error::ParseIntError(*iline, Some(iitem + 1), err))
                         }
@@ -472,7 +484,7 @@ impl IesFile {
     /// - Completely in the bottom hemisphere: first angles and 0 degrees and 90 degress respectively.
     /// - Completely in the top hemisphere: first angles and 90 degrees and 180 degress respectively.
     /// - Otherwise: first angles and 0 degrees and 180 degress respectively.
-    pub fn vertical_angles_valid(angles: &Vec<f32>) -> bool {
+    pub fn vertical_angles_valid(angles: &Vec<f64>) -> bool {
         match angles.first() {
             Some(first) => match first {
                 x if *x == 0.0 => match angles.last() {
@@ -503,7 +515,7 @@ impl IesFile {
     /// - If the last value is 180.0 degress, the distribution is symmetric about a vertical plane.
     /// - If the last value is greater than 180.0 and less than or equal to 360.0, no lateral symmetries.
     /// - Hence, the valid last values are: 0.0, 90.0, 180.0 - 360.0.  
-    pub fn horizontal_angles_valid(angles: &Vec<f32>) -> bool {
+    pub fn horizontal_angles_valid(angles: &Vec<f64>) -> bool {
         match angles.first() {
             Some(first) => match first {
                 x if *x == 0.0 => match angles.last() {
@@ -521,8 +533,8 @@ impl IesFile {
         }
     }
 
-    /// Writes the currently loaded EULUMDAT file to a specified file. 
-    /// The written value is determined by `LdtFile::to_string(&self)`. 
+    /// Writes the currently loaded EULUMDAT file to a specified file.
+    /// The written value is determined by `LdtFile::to_string(&self)`.
     pub fn to_file(&self, outpath: &Path) -> Result<(), Error> {
         let mut file = File::create(outpath)?;
         file.write(self.to_string().as_bytes())?;
@@ -536,6 +548,68 @@ impl IesFile {
             .fold("".to_string(), |accum, (key, val)| {
                 accum + &format!("[{}] {}\n", key, val)
             })
+    }
+
+    /// Get the type and properties of the luminous opening.
+    pub fn get_luminous_opening(&self) -> IesLuminousOpening {
+        IesLuminousOpening::from_dimensions(
+            self.luminous_opening_width,
+            self.luminous_opening_length,
+            self.luminous_opening_height,
+        )
+    }
+
+    /// Gets the planes from this object.
+    pub fn get_planes(&self) -> Vec<Plane> {
+        match self.photometric_type {
+            IesPhotometryType::TypeA => self.get_planes_type_a(),
+            IesPhotometryType::TypeB => self.get_planes_type_b(),
+            IesPhotometryType::TypeC => self.get_planes_type_c(),
+        }
+    }
+
+    /// Get the planes from a Type A photometry IES file.
+    pub fn get_planes_type_a(&self) -> Vec<Plane> {
+        todo!()
+    }
+
+    /// Get the planes from a Type A photometry IES file.
+    pub fn get_planes_type_b(&self) -> Vec<Plane> {
+        todo!()
+    }
+
+    /// Get the planes from a Type C photometry IES file.
+    pub fn get_planes_type_c(&self) -> Vec<Plane> {
+        // Chunk the intensities into the planes, and give them appropriate angles.
+        let mut planes = self
+            .candela_values
+            .chunks(self.n_vertical_angles)
+            .enumerate()
+            .map(|(iplane, intensities_candelas)| {
+                let mut curr_plane = Plane::new();
+                curr_plane.set_angle_degrees(self.horizontal_angles[iplane]);
+                curr_plane.set_orientation(PlaneOrientation::Vertical);
+                curr_plane.set_intensities(Vec::from(intensities_candelas));
+                curr_plane.set_angles_degrees(&self.vertical_angles);
+                curr_plane.set_units(IntensityUnits::Candela);
+                curr_plane
+            })
+            .collect::<Vec<Plane>>();
+        
+        // Now resolve the symmetries.
+        // First, check if we have the first quadrant filled (from 0 -> 90 deg).
+        // If so, mirror this to fill the 0 -> 180 degree hemisphere. 
+        if (planes.iter().last().unwrap().angle() - (PI / 2.0)).abs() <= f64::EPSILON {
+            planes = mirror_first_quadrant(&planes);
+        }
+
+        // Now, check to see if we have the first hemisphere (0 -> 180 deg). 
+        // If so mirror this to fill the final hemisphere.
+        if (planes.iter().last().unwrap().angle() - (PI)).abs() <= f64::EPSILON {
+            planes = mirror_first_hemisphere(&planes);
+        }
+
+        planes
     }
 }
 
@@ -567,7 +641,7 @@ impl ToString for IesFile {
             self.candela_multiplying_factor,
             self.n_vertical_angles,
             self.n_horizontal_angles,
-            self.photometric_type,
+            (self.photometric_type.clone() as usize),
             self.luminous_opening_units,
             self.luminous_opening_width,
             self.luminous_opening_length,
@@ -599,5 +673,22 @@ impl ToString for IesFile {
         );
 
         output
+    }
+}
+
+impl From<IesFile> for PhotometricWeb {
+    fn from(ies: IesFile) -> Self {
+        let mut photweb = PhotometricWeb::new();
+        photweb.set_planes(ies.get_planes());
+        photweb
+    }
+}
+
+//TODO: Implement conversion.
+impl PhotometricWebReader for IesFile {
+    fn read(&self, path: &Path) -> Result<PhotometricWeb, Error> {
+        let ies_file = Self::parse_file(path)?;
+        let photweb = ies_file.into();
+        Ok(photweb)
     }
 }

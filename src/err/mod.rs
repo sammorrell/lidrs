@@ -1,3 +1,4 @@
+//! Error module.
 use std::fmt::Display;
 
 #[derive(Debug)]
@@ -5,6 +6,8 @@ pub enum Error {
     IOError(std::io::Error),
     IESError(crate::io::ies::Error),
     LDTError(crate::io::eulumdat::Error),
+    InvalidFileType(String),
+    BuildError(Box<Error>),
 }
 
 impl From<std::io::Error> for Error {
@@ -32,6 +35,8 @@ impl Display for Error {
                 Error::IOError(ref e) => format!("IO Error: {}", e),
                 Error::IESError(ref e) => format!("IES Parse Error: {}", e),
                 Error::LDTError(ref e) => format!("EULUMDAT (LDT) Parse Error: {}", e),
+                Error::BuildError(ref err) => format!("Photometric Web Build Error: {}", err),
+                Error::InvalidFileType(ref ext) => format!("Invalid file type: {}", ext),
             }
         })
     }

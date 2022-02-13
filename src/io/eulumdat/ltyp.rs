@@ -1,6 +1,6 @@
 use num_enum::TryFromPrimitive;
 
-#[derive(Debug, Clone, TryFromPrimitive)]
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq)]
 #[repr(usize)]
 pub enum EulumdatType {
     PointSourceWithSymmetryAboutVerticalAxis = 1,

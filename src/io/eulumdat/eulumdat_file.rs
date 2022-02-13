@@ -1,6 +1,11 @@
 use super::err as ldt_err;
 use super::{util, EulumdatSymmetry, EulumdatType};
-use crate::err::Error;
+use crate::photweb::{
+    mirror_first_hemisphere, mirror_first_quadrant, IntensityUnits, PhotometricWeb, Plane,
+    PlaneOrientation, mirror_second_and_third_quadrants,
+};
+use crate::util::geom::degrees_to_radians;
+use crate::{err::Error, photweb::PhotometricWebReader};
 use property::Property;
 use std::{
     default::Default,
@@ -16,7 +21,7 @@ const LAMP_SECTION_START: usize = 27;
 const N_LAMP_PARAMS: usize = 6;
 
 #[allow(dead_code)]
-#[derive(Default, Debug, Property)]
+#[derive(Default, Debug, Clone, Property, PartialEq)]
 pub struct EulumdatFile {
     /// The first line of the file. Contains company identification / data bank / version / format identification.
     header: String,
@@ -439,12 +444,61 @@ impl EulumdatFile {
         // The number of luminous intensities, which is dependent on the symmetry of the object.
     }
 
-    /// Writes the currently loaded EULUMDAT file to a specified file. 
-    /// The written value is determined by `EulumdatFile::to_string(&self)`. 
+    /// Writes the currently loaded EULUMDAT file to a specified file.
+    /// The written value is determined by `EulumdatFile::to_string(&self)`.
     pub fn to_file(&self, outpath: &Path) -> Result<(), Error> {
         let mut file = File::create(outpath)?;
         file.write(self.to_string().as_bytes())?;
         Ok(())
+    }
+
+    /// Gets the planes from this file.
+    pub fn get_planes(&self) -> Vec<Plane> {
+        let mut planes: Vec<Plane> = self
+            .intensities
+            .chunks(self.n_luminous_intensities_per_cplane)
+            .zip(self.c_angles.iter())
+            .map(|(intens, c_angle)| {
+                let mut pl = Plane::new();
+                // First set the angle.
+                pl.set_angle(degrees_to_radians(*c_angle));
+                // Set the angles of the plane from the angles in our C-Plane.
+                pl.set_angles(
+                    self.g_angles
+                        .iter()
+                        .map(|ang_deg| degrees_to_radians(*ang_deg))
+                        .collect::<Vec<f64>>(),
+                );
+                // Set the intensities from this chunk of angles.
+                pl.set_intensities(Vec::from(intens));
+                // Set the flux units of the intensities.
+                pl.set_units(IntensityUnits::Candela);
+                // Set the units of the units.
+                pl.set_orientation(PlaneOrientation::Vertical);
+
+                pl
+            })
+            .collect();
+
+        // Now fill the planes if we have symmetry.
+        // Fill the last 180 degrees of the plane from the C0-C180 plane contents.
+        if self.symmetry == EulumdatSymmetry::C0C180C90C270Plane {
+            planes = mirror_first_quadrant(&planes);
+        }
+
+        // Fill the last 180 degrees of the plane from the C0-C180 plane contents.
+        if self.symmetry == EulumdatSymmetry::C0C180Plane
+            || self.symmetry == EulumdatSymmetry::C0C180C90C270Plane
+        {
+            planes = mirror_first_hemisphere(&planes);
+        }
+
+        // On the other hand, let's generate the symmetry for the C90-C270 case.
+        if self.symmetry == EulumdatSymmetry::C90C270Plane {
+            planes = mirror_second_and_third_quadrants(&planes);
+        }
+
+        planes
     }
 }
 
@@ -528,5 +582,23 @@ impl ToString for EulumdatFile {
                     )
                     .as_ref()
             })
+    }
+}
+
+impl From<EulumdatFile> for PhotometricWeb {
+    fn from(eul: EulumdatFile) -> Self {
+        let mut photweb = PhotometricWeb::new();
+        // Get the angles.
+        photweb.set_planes(eul.get_planes());
+        photweb
+    }
+}
+
+//TODO: Implement conversion.
+impl PhotometricWebReader for EulumdatFile {
+    fn read(&self, path: &Path) -> Result<PhotometricWeb, Error> {
+        let eul_file = Self::parse_file(path)?;
+        let photweb: PhotometricWeb = eul_file.into();
+        Ok(photweb)
     }
 }

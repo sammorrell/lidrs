@@ -1,3 +1,5 @@
+use crate::{io::ies::lum_opening::IesLuminousOpening, photweb::PhotometricWeb};
+
 use super::{IesFile, LuminousOpeningUnits};
 
 const IESNA_1991_FILE: &str = "IESNA91
@@ -60,7 +62,6 @@ fn basic_parse_test() {
             assert!(IesFile::horizontal_angles_valid(
                 &ies.horizontal_angles().to_vec()
             ));
-
         }
     }
 }
@@ -177,5 +178,194 @@ fn parse_properties_test() {
             ));
         }
         Err(e) => assert!(false, "Properties parse error: {}", e),
+    }
+}
+
+#[test]
+/// In this test we will run through each case in turn and check that we get the correct result.
+fn test_get_luminous_opening() {
+    let mut ies = IesFile::new();
+
+    // Point
+    assert_eq!(ies.get_luminous_opening(), IesLuminousOpening::Point);
+
+    // Rectangular
+    ies.set_luminous_opening_width(1.0);
+    ies.set_luminous_opening_length(1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::Rectangular {
+            width: 1.0,
+            length: 1.0
+        }
+    );
+
+    // Rectangular with luminous sides.
+    ies.set_luminous_opening_height(1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::RectanguarLuminousSides {
+            width: 1.0,
+            length: 1.0,
+            height: 1.0
+        }
+    );
+
+    // Circular
+    ies.set_luminous_opening_width(-1.0);
+    ies.set_luminous_opening_length(-1.0);
+    ies.set_luminous_opening_height(0.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::Circular { diameter: 1.0 }
+    );
+
+    // Ellipse
+    ies.set_luminous_opening_length(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::Ellipse {
+            width: 1.0,
+            length: 2.0
+        }
+    );
+
+    // Vertical Cylinder
+    ies.set_luminous_opening_length(-1.0);
+    ies.set_luminous_opening_height(1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::VerticalCylinder {
+            diameter: 1.0,
+            height: 1.0
+        }
+    );
+
+    // Vertical Ellipsoidal Cylinder
+    ies.set_luminous_opening_length(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::VerticalEllipsoidalCylinder {
+            width: 1.0,
+            length: 2.0,
+            height: 1.0
+        }
+    );
+
+    // Sphere
+    ies.set_luminous_opening_length(-1.0);
+    ies.set_luminous_opening_height(-1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::Sphere { diameter: 1.0 }
+    );
+
+    // Ellipsoidal Spheroid
+    ies.set_luminous_opening_height(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::EllipsoidalSpheroid {
+            width: 1.0,
+            length: 1.0,
+            height: 2.0
+        }
+    );
+    ies.set_luminous_opening_width(-3.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::EllipsoidalSpheroid {
+            width: 3.0,
+            length: 1.0,
+            height: 2.0
+        }
+    );
+
+    // Horizontal Cylinder along Photometric Horizontal
+    ies.set_luminous_opening_width(-1.0);
+    ies.set_luminous_opening_length(1.0);
+    ies.set_luminous_opening_height(-1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::HorizontalCylinderAlong {
+            diameter: 1.0,
+            length: 1.0
+        }
+    );
+
+    // Horizontal Ellipsoidal Cylinder Along Photometric Horizontal
+    ies.set_luminous_opening_height(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::HorizontalEllipsoidalCylinderAlong {
+            width: 1.0,
+            length: 1.0,
+            height: 2.0
+        }
+    );
+
+    // Horizontal Cylinder Perpendicular to Photometric Horizontal
+    ies.set_luminous_opening_width(1.0);
+    ies.set_luminous_opening_length(-1.0);
+    ies.set_luminous_opening_height(-1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::HorizontalCylinderPerpendicular {
+            width: 1.0,
+            diameter: 1.0
+        }
+    );
+
+    // Horizontal Ellipsoidal Cylinder Perpendicular to Photometric Horizontal
+    ies.set_luminous_opening_height(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::HorizontalEllipsoidalCylinderPerpendicular {
+            width: 1.0,
+            length: 1.0,
+            height: 2.0
+        }
+    );
+
+    // Vertical Circle Facing Photometric Horizontal
+    ies.set_luminous_opening_width(-1.0);
+    ies.set_luminous_opening_length(0.0);
+    ies.set_luminous_opening_height(-1.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::VerticalCircle { diameter: 1.0 }
+    );
+
+    // Vertical Ellipse Facing Photometric Horizontal
+    ies.set_luminous_opening_height(-2.0);
+    assert_eq!(
+        ies.get_luminous_opening(),
+        IesLuminousOpening::VerticalEllipse {
+            width: 1.0,
+            height: 2.0
+        }
+    );
+}
+
+/// Example file provided by Annex C of IES spec.
+const EXAMPLE_IESNA2002_TYPEC: &str = include_str!("iesna2002_example_typec.ies");
+
+/// Check that we can perform a basic conversion from an IES formatted file
+/// to a `PhotometricWeb`, making sure to check that the symmetries are being
+/// correclty resolved and dealy with for Type C photometry. 
+#[test]
+fn test_photweb_from_ies_typec() {
+    let mut ies = IesFile::new();
+    match ies.parse(&EXAMPLE_IESNA2002_TYPEC.to_owned()) {
+        Err(e) => assert!(false, "Parse error: {}", e),
+        Ok(_) => {
+            let photweb: PhotometricWeb = ies.clone().into();
+
+            // Check that we have the correct number of planes for angles.
+            // This should consider that the symmetries are correctly resolved 
+            // into the full photometric web.
+            assert_eq!(photweb.n_planes(), 8);
+
+            println!("{:?}", photweb);
+        }
     }
 }

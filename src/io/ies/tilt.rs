@@ -10,7 +10,7 @@ use std::{
 use super::DELIMITERS_PATTERN;
 
 /// A struct for representing tilt angles in lumminaires.
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Tilt {
     lamp_to_lumminaire_geometry: usize,
     no_tilt_angles: usize,
