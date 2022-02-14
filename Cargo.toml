@@ -2,6 +2,13 @@
 name = "lidrs"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE"
+description = " A rust crate for reading and representing light intensity distributions via photometric webs. "
+keywords = ["ies", "ldt", "photometric", "light"]
+categories = ["science", "mathematics", "parser-implementations"]
+repository = "https://github.com/sammorrell/lidrs"
+readme = "README.md"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
