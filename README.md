@@ -1,6 +1,6 @@
 # `lidrs` - Luminous Intensity Distributions in Rust
 
-![build and test workflow](https://github.com/sammorrell/lidrs/actions/workflows/build-test.yml)
+![build and test workflow](https://github.com/sammorrell/lidrs/actions/workflows/build-test.yml/badge.svg)
 
 A rust crate for reading and representing light intensity distributions via photometric webs. 
 This crate can read and write:
