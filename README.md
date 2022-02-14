@@ -1,4 +1,4 @@
-# lidrs - Luminout Intensity Distributions in Rust
+# `lidrs` - Luminous Intensity Distributions in Rust
 A rust crate for reading and representing light intensity distributions via photometric webs. 
 This crate can read and write:
 - Illuminating Engineering Society (LM-63) standard (`.ies`) files
