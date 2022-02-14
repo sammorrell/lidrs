@@ -17,6 +17,7 @@ impl Default for PlaneOrientation {
 }
 
 #[derive(Debug, Clone, Default, Property)]
+#[property(get(public), set(public))]
 pub struct Plane {
     /// The angle of the plane, stored in radians.
     angle: f64,

@@ -3,6 +3,7 @@ use property::Property;
 use std::{default::Default, f64::consts::PI};
 
 #[derive(Default, Debug, Property)]
+#[property(get(public), set(public))]
 pub struct PhotometricWeb {
     /// The planes that are contained in the photometric web.
     /// Note: if we have a single element in this vector, if is assumed spherically symmetric.
