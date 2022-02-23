@@ -55,10 +55,32 @@ impl PhotometricWeb {
             .map(|(i, p)| p.integrate_intensity() * self.delta_angle(i))
             .sum()
     }
+
+    /// This resolves a plane index into a plane. 
+    /// If the index is between 0 and the number of planes - 1, this function will
+    /// just directly resolve the index. However, if the index is outside of this range
+    /// it will resolve the index back to an index by iterating around the circle.
+    fn resolve_index(&self, iplane: i32) -> &Plane {
+        let count = self.n_planes() as i32;
+        let idx = (iplane % count + count) % count;
+        println!("{}", idx);
+        &self.planes()[idx as usize]
+    }
+
+    /// Returns the adjacent planes of a plane at a given index. This will resolve
+    /// the index, so going lower than zero and higher than nplanes - 1 is permitted. 
+    pub fn get_adjacent_planes(&self, iplane: i32) -> (&Plane, &Plane) {        
+        // Get the plane lower, remembering to resolve if this if the first plane. 
+        let lplane = self.resolve_index(iplane as i32 - 1);
+        let uplane = self.resolve_index(iplane as i32 + 1);
+        (lplane, uplane)
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::util::geom::degrees_to_radians;
+
     use super::{PhotometricWeb, Plane};
     use approx::assert_abs_diff_eq;
     use std::f64::consts::PI;
@@ -132,5 +154,85 @@ mod tests {
 
         // Check that this is true to within 0.01 per cent.
         assert_abs_diff_eq!(int, 4.0 * PI, epsilon = (4.0 * PI) * 1E-4);
+    }
+
+    /// This test case checks that we correctly find the adjacent planes, 
+    /// even at the start and end of the array. As we are dealing with a repeating structre
+    /// we test that the index wraps around the sphere, and that we still get the correct
+    /// plane back anywhere within the list of planes too. 
+    #[test]
+    fn test_get_adjacent_planes() {
+        let mut plane = Plane::new();
+        plane.set_angle(0.0);
+        plane.set_angles_degrees(
+            &(0..181)
+                .into_iter()
+                .map(|ang_i| ang_i as f64)
+                .collect::<Vec<f64>>(),
+        );
+        plane.set_intensities(plane.angles().iter().map(|_| 1.0).collect::<Vec<f64>>());
+
+        let mut web = PhotometricWeb::new();
+        web.set_planes(
+            (0..360)
+                .step_by(10)
+                .into_iter()
+                .map(|ang_deg| {
+                    let mut new_plane = plane.clone();
+                    new_plane.set_angle_degrees(ang_deg as f64);
+                    new_plane
+                })
+                .collect::<Vec<Plane>>(),
+        );
+
+        // Check at the start of the array.
+        let (lp, up) = web.get_adjacent_planes(0);
+        assert_eq!(lp.angle(), degrees_to_radians(350.));
+        assert_eq!(up.angle(), degrees_to_radians(10.));
+
+        // Check at the end of the array.
+        let (lp, up) = web.get_adjacent_planes(35);
+        assert_eq!(lp.angle(), degrees_to_radians(340.));
+        assert_eq!(up.angle(), degrees_to_radians(0.));
+
+        // Check a couple places within the array. 
+        let (lp, up) = web.get_adjacent_planes(10);
+        assert_eq!(lp.angle(), degrees_to_radians(90.));
+        assert_eq!(up.angle(), degrees_to_radians(110.));
+
+        let (lp, up) = web.get_adjacent_planes(20);
+        assert_eq!(lp.angle(), degrees_to_radians(190.));
+        assert_eq!(up.angle(), degrees_to_radians(210.));
+    }
+
+    /// This test case checks that we correctly find the adjacent planes, 
+    /// even at the start and end of the array. As we are dealing with a repeating structre
+    /// we test that the index wraps around the sphere, and that we still get the correct
+    /// plane back anywhere within the list of planes too. 
+    #[test]
+    fn test_get_adjacent_planes_polar_symmetry() {
+        let mut plane = Plane::new();
+        plane.set_angle(0.0);
+        plane.set_angles_degrees(
+            &(0..181)
+                .into_iter()
+                .map(|ang_i| ang_i as f64)
+                .collect::<Vec<f64>>(),
+        );
+        plane.set_intensities(plane.angles().iter().map(|_| 1.0).collect::<Vec<f64>>());
+        plane.set_angle(0.0);
+
+        let mut web = PhotometricWeb::new();
+        web.set_planes(vec![plane]);
+
+        // Check at the start of the array.
+        let (lp, up) = web.get_adjacent_planes(0);
+        assert_eq!(lp.angle(), degrees_to_radians(0.));
+        assert_eq!(up.angle(), degrees_to_radians(0.));
+
+        // Check another arbitrary index.
+        let (lp, up) = web.get_adjacent_planes(7);
+        assert_eq!(lp.angle(), degrees_to_radians(0.));
+        assert_eq!(up.angle(), degrees_to_radians(0.));
     }
 }
