@@ -21,6 +21,8 @@ impl Default for PlaneOrientation {
 pub struct Plane {
     /// The angle of the plane, stored in radians.
     angle: f64,
+    /// The width of the plane, in radians. 
+    width: f64,
     /// The orientation of the plane.
     orientation: PlaneOrientation,
     /// A vector containing angles within the plane, stored in radians
@@ -86,11 +88,11 @@ impl Plane {
 
     /// Integrate the total energy being emitted by this plane.
     pub fn integrate_intensity(&self) -> f64 {
-        self.intensities
+        self.width * self.intensities
             .iter()
             .enumerate()
             .map(|(i, int)| int * f64::sin(self.angles[i]) * self.delta_angle(i))
-            .sum()
+            .sum::<f64>()
     }
 }
 
@@ -106,6 +108,7 @@ mod tests {
     fn test_integrate_plane() {
         let mut plane = Plane::new();
         plane.set_angle(0.0);
+        plane.set_width(1.0);
         plane.set_angles_degrees(
             &(0..181)
                 .into_iter()

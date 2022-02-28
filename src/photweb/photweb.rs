@@ -7,6 +7,7 @@ use std::{default::Default, f64::consts::PI};
 pub struct PhotometricWeb {
     /// The planes that are contained in the photometric web.
     /// Note: if we have a single element in this vector, if is assumed spherically symmetric.
+    #[property(set(disable))]
     planes: Vec<Plane>,
 }
 
@@ -15,6 +16,15 @@ impl PhotometricWeb {
     pub fn new() -> PhotometricWeb {
         Self {
             ..Default::default()
+        }
+    }
+
+    /// Set the
+    pub fn set_planes(&mut self, planes: Vec<Plane>) {
+        self.planes = planes;
+        for iplane in 0..self.n_planes() {
+            let delta_angle = self.delta_angle(iplane);
+            self.planes[iplane].set_width(delta_angle);
         }
     }
 
@@ -33,14 +43,15 @@ impl PhotometricWeb {
         if self.is_spherically_symmetric() {
             2.0 * PI
         } else {
+            let (lp, up) = self.get_adjacent_planes(i as i32);
             match i {
                 0 => self.planes[1].angle() - self.planes[0].angle(),
                 x if x >= self.planes.iter().count() - 1 => {
                     self.planes[i].angle() - self.planes[i - 1].angle()
                 }
                 _ => {
-                    0.5 * ((self.planes[i].angle() - self.planes[i - 1].angle())
-                        + (self.planes[i + 1].angle() - self.planes[i].angle()))
+                    0.5 * ((self.planes[i].angle() - lp.angle())
+                        + (up.angle() - self.planes[i].angle()))
                 }
             }
         }
@@ -51,8 +62,7 @@ impl PhotometricWeb {
     pub fn total_intensity(&self) -> f64 {
         self.planes
             .iter()
-            .enumerate()
-            .map(|(i, p)| p.integrate_intensity() * self.delta_angle(i))
+            .map(|p| p.integrate_intensity())
             .sum()
     }
 
@@ -63,7 +73,6 @@ impl PhotometricWeb {
     fn resolve_index(&self, iplane: i32) -> &Plane {
         let count = self.n_planes() as i32;
         let idx = (iplane % count + count) % count;
-        println!("{}", idx);
         &self.planes()[idx as usize]
     }
 

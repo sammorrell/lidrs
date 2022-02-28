@@ -364,8 +364,6 @@ fn test_photweb_from_ies_typec() {
             // This should consider that the symmetries are correctly resolved 
             // into the full photometric web.
             assert_eq!(photweb.n_planes(), 8);
-
-            println!("{:?}", photweb);
         }
     }
 }
