@@ -34,6 +34,22 @@ impl PlaneWidth {
             PlaneWidth::Asymmetric { ref lower, ref upper } => lower + upper
         }
     }
+
+    /// Returns the section of the width that lies below the central angle of the plane. 
+    pub fn lower(&self) -> f64 {
+        match *self {
+            PlaneWidth::Symmetric(width) => width / 2.0,
+            PlaneWidth::Asymmetric{ lower, upper: _ } => lower,
+        }
+    }
+
+    /// Returns the section of the width that lies above the central angle of the plane. 
+    pub fn upper(&self) -> f64 {
+        match *self {
+            PlaneWidth::Symmetric(width) => width / 2.0,
+            PlaneWidth::Asymmetric{ lower: _, upper } => upper,
+        }
+    }
 }
 
 impl Default for PlaneWidth {
