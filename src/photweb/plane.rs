@@ -16,13 +16,56 @@ impl Default for PlaneOrientation {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum PlaneWidth {
+    Symmetric(f64),
+    Asymmetric{ lower: f64, upper: f64}
+}
+
+impl PlaneWidth {
+    /// Returns a new instance of the plane spacing enum using the default value. 
+    pub fn new() -> Self {
+        PlaneWidth::default()
+    }
+
+    pub fn total(&self) -> f64 {
+        match *self {
+            PlaneWidth::Symmetric(width) => width,
+            PlaneWidth::Asymmetric { ref lower, ref upper } => lower + upper
+        }
+    }
+
+    /// Returns the section of the width that lies below the central angle of the plane. 
+    pub fn lower(&self) -> f64 {
+        match *self {
+            PlaneWidth::Symmetric(width) => width / 2.0,
+            PlaneWidth::Asymmetric{ lower, upper: _ } => lower,
+        }
+    }
+
+    /// Returns the section of the width that lies above the central angle of the plane. 
+    pub fn upper(&self) -> f64 {
+        match *self {
+            PlaneWidth::Symmetric(width) => width / 2.0,
+            PlaneWidth::Asymmetric{ lower: _, upper } => upper,
+        }
+    }
+}
+
+impl Default for PlaneWidth {
+    /// By default we will assume the spherically symmetric case. 
+    fn default() -> Self {
+        PlaneWidth::Symmetric( 2.0 * std::f64::consts::PI )
+    }
+}
+
 #[derive(Debug, Clone, Default, Property)]
 #[property(get(public), set(public))]
 pub struct Plane {
     /// The angle of the plane, stored in radians.
     angle: f64,
     /// The width of the plane, in radians. 
-    width: f64,
+    width: PlaneWidth,
     /// The orientation of the plane.
     orientation: PlaneOrientation,
     /// A vector containing angles within the plane, stored in radians
@@ -88,7 +131,7 @@ impl Plane {
 
     /// Integrate the total energy being emitted by this plane.
     pub fn integrate_intensity(&self) -> f64 {
-        self.width * self.intensities
+        self.width.total() * self.intensities
             .iter()
             .enumerate()
             .map(|(i, int)| int * f64::sin(self.angles[i]) * self.delta_angle(i))
@@ -98,7 +141,7 @@ impl Plane {
 
 #[cfg(test)]
 mod tests {
-    use super::Plane;
+    use super::{Plane, PlaneWidth};
     use approx::assert_abs_diff_eq;
 
     /// In this case, I am filling the array with a constant of 1.0, which simplifies the integral for each plane
@@ -108,7 +151,7 @@ mod tests {
     fn test_integrate_plane() {
         let mut plane = Plane::new();
         plane.set_angle(0.0);
-        plane.set_width(1.0);
+        plane.set_width(PlaneWidth::Symmetric(1.0));
         plane.set_angles_degrees(
             &(0..181)
                 .into_iter()

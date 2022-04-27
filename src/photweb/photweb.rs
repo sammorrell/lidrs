@@ -1,6 +1,7 @@
-use super::Plane;
+use super::{Plane, PlaneWidth};
 use property::Property;
 use std::{default::Default, f64::consts::PI};
+use crate::util::geom::angle_difference;
 
 #[derive(Default, Debug, Property)]
 #[property(get(public), set(public))]
@@ -39,20 +40,24 @@ impl PhotometricWeb {
     }
 
     /// The dphi for a given plane - used during integration.
-    pub fn delta_angle(&self, i: usize) -> f64 {
+    pub fn delta_angle(&self, i: usize) -> PlaneWidth {
         if self.is_spherically_symmetric() {
-            2.0 * PI
+            PlaneWidth::Symmetric(2.0 * PI)
         } else {
+            // First, we retrieve the current plane, and the two adjacent p;lanes. 
+            let curr_plane = &self.planes[i];
             let (lp, up) = self.get_adjacent_planes(i as i32);
-            match i {
-                0 => self.planes[1].angle() - self.planes[0].angle(),
-                x if x >= self.planes.iter().count() - 1 => {
-                    self.planes[i].angle() - self.planes[i - 1].angle()
-                }
-                _ => {
-                    0.5 * ((self.planes[i].angle() - lp.angle())
-                        + (up.angle() - self.planes[i].angle()))
-                }
+
+            // Now find the difference in angles angles at both sides of the plane. 
+            let lower = angle_difference(curr_plane.angle(), lp.angle());
+            let upper = angle_difference(up.angle(), curr_plane.angle());
+            
+            if lower == upper {
+                PlaneWidth::Symmetric(0.5 * (lower + upper))
+            } else {
+                // In this case the upper and lower planes are not equally spaced. 
+                // This means that we require extra information about the relative spacing of either side of the plane. 
+                PlaneWidth::Asymmetric { lower: lower / 2.0, upper: upper / 2.0 }
             }
         }
     }
