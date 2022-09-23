@@ -1,0 +1,15 @@
+[package]
+name = "lidpy"
+authors = ["Sam Morrell <s.a.f.morrell@exeter.ac.uk>"]
+version = "0.2.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+lidrs = { path = "../" }
+
+[dependencies.pyo3]
+version = "0.17.*"
+features = ["extension-module"]
