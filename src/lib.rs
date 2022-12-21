@@ -10,5 +10,6 @@
 
 pub mod err;
 pub mod io;
+pub mod ops;
 pub mod photweb;
 pub mod util;
