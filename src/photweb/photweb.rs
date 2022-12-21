@@ -89,6 +89,35 @@ impl PhotometricWeb {
         let uplane = self.resolve_index(iplane as i32 + 1);
         (lplane, uplane)
     }
+
+    /// Returns a specified pair of C-Planes, arranged appropriately for plottuing. 
+    /// For example, the most common usage would be the C0-C180 and C90-C270 pairs.
+    /// If one of both of the planes are not defined within the photometric web, None is returned.
+    /// If the process has been successful, a Some with a tuple containing (angles, intensities) Vecs is returned. 
+    pub fn get_cplane_pair(&self, angle_lower_deg: f64, angle_upper_deg: f64) -> Option<(Vec<f64>, Vec<f64>)> {
+        let (angle_lower, angle_upper) = if angle_upper_deg > angle_lower_deg { (angle_lower_deg, angle_upper_deg) } else { (angle_upper_deg, angle_lower_deg) };
+        let pl1 = self.planes().iter().find(|pl| pl.angle_deg() == angle_lower);
+        let pl2 = self.planes().iter().find(|pl| pl.angle_deg() == angle_upper);
+
+        // In this case one or both of the planes does not exist, so return None. 
+        if pl1.is_none() || pl2.is_none() { return None };
+
+        let angles: Vec<f64> = pl2.unwrap().angles()
+            .into_iter()
+            .rev()
+            .map(|ang| (2.0 * PI) - ang) // Mirror around the 0 angle points. 
+            .chain(pl1.unwrap().angles().iter().map(|val| *val))
+            .collect();
+
+        let intensities: Vec<f64> = pl2.unwrap().intensities()
+            .into_iter()
+            .rev()
+            .chain(pl1.unwrap().intensities())
+            .map(|val| *val)
+            .collect();
+
+        Some((angles, intensities))
+    }
 }
 
 #[cfg(test)]
