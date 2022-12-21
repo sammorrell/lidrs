@@ -1,5 +1,4 @@
-use crate::{io::ies::lum_opening::IesLuminousOpening, photweb::PhotometricWeb};
-
+use crate::{io::ies::lum_opening::IesLuminousOpening, photweb::{PhotometricWeb, Plane}};
 use super::{IesFile, LuminousOpeningUnits};
 
 const IESNA_1991_FILE: &str = "IESNA91
@@ -366,4 +365,36 @@ fn test_photweb_from_ies_typec() {
             assert_eq!(photweb.n_planes(), 8);
         }
     }
+}
+
+#[test]
+fn test_photweb_to_ies_file() {
+    let planes = (0..360)
+        .step_by(90)
+        .map(|plane_angle| 
+        {
+            let mut plane = Plane::new();
+            plane.set_angle_degrees(plane_angle as f64);
+            plane.set_angles_degrees(
+                &(0..180)
+                    .into_iter()
+                    .map(|ang_i| ang_i as f64)
+                    .collect::<Vec<f64>>(),
+            );
+            plane.set_intensities(plane.angles().iter().map(|_| 1.0).collect::<Vec<f64>>());
+            plane.set_angle(0.0);
+            plane
+        })
+        .collect();
+
+    let mut web = PhotometricWeb::new();
+    web.set_planes(planes);
+
+    // Convert to ldt file. 
+    let ldt: IesFile = (&web).into();
+
+    assert_eq!(ldt.get_planes().len(), 4);
+    assert_eq!(ldt.horizontal_angles().len(), 4_usize);
+    assert_eq!(ldt.vertical_angles().len(), 180_usize);
+    assert_eq!(ldt.candela_values().len(), 180_usize * 4);
 }

@@ -4,7 +4,7 @@ use super::{phot_type::IesPhotometryType, standard::IesStandard, tilt::Tilt};
 use crate::photweb::{Plane, mirror_first_quadrant, mirror_first_hemisphere};
 use crate::{
     err::Error,
-    photweb::{IntensityUnits, PhotometricWeb, PhotometricWebReader, PlaneOrientation},
+    photweb::{IntensityUnits, PhotometricWeb, PhotometricWebReader, PhotometricWebWriter, PlaneOrientation},
 };
 use property::Property;
 use regex::Regex;
@@ -690,5 +690,39 @@ impl PhotometricWebReader for IesFile {
         let ies_file = Self::parse_file(path)?;
         let photweb = ies_file.into();
         Ok(photweb)
+    }
+}
+
+impl PhotometricWebWriter for IesFile {
+    fn write(pw: &PhotometricWeb, path: &Path) -> Result<(), Error> {
+        let ldt: IesFile = pw.into();
+        ldt.to_file(path)?;
+        Ok(())
+    }
+}
+
+impl From<&PhotometricWeb> for IesFile {
+    fn from(pw: &PhotometricWeb) -> Self {
+        let mut ies = IesFile::new();
+        ies.set_standard(IesStandard::Iesna2002);
+        ies.set_n_lamps(1_usize);
+        ies.set_lumens_per_lamp(1.0);
+        ies.set_candela_multiplying_factor(1.0);
+        ies.set_n_vertical_angles(pw.planes()[0].n_samples());
+        ies.set_n_horizontal_angles(pw.n_planes());
+        
+        // Set angles.
+        ies.set_vertical_angles(pw.planes()[0].angles_deg());
+        ies.set_horizontal_angles(pw.planes().iter().map(|plane| plane.angle_deg()).collect::<Vec<f64>>());
+        ies.set_candela_values(pw
+            .planes()
+            .iter()
+            .map(|plane| {
+                Vec::from(plane.intensities())
+            }).flatten()
+            .collect::<Vec<f64>>()
+        );
+
+        ies
     }
 }
