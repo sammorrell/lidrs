@@ -1,5 +1,5 @@
 use super::{EulumdatFile, EulumdatSymmetry};
-use crate::photweb::PhotometricWeb;
+use crate::photweb::{PhotometricWeb, Plane};
 use approx::assert_relative_eq;
 use std::path::Path;
 
@@ -251,4 +251,35 @@ fn test_get_planes_spherical_symmetry() {
             .collect::<Vec<f64>>(),
         vec![1.0]
     );
+}
+
+#[test]
+fn test_photweb_to_eulumdat_file() {
+    let planes = (0..360)
+        .step_by(90)
+        .map(|plane_angle| 
+        {
+            let mut plane = Plane::new();
+            plane.set_angle_degrees(plane_angle as f64);
+            plane.set_angles_degrees(
+                &(0..180)
+                    .into_iter()
+                    .map(|ang_i| ang_i as f64)
+                    .collect::<Vec<f64>>(),
+            );
+            plane.set_intensities(plane.angles().iter().map(|_| 1.0).collect::<Vec<f64>>());
+            plane.set_angle(0.0);
+            plane
+        })
+        .collect();
+
+    let mut web = PhotometricWeb::new();
+    web.set_planes(planes);
+
+    // Convert to ldt file. 
+    let ldt: EulumdatFile = (&web).into();
+
+    assert_eq!(ldt.c_angles().len(), 4);
+    assert_eq!(ldt.g_angles().len(), 180_usize);
+    assert_eq!(ldt.intensities().len(), 180_usize * 4);
 }

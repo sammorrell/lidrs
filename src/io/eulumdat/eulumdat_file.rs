@@ -2,7 +2,7 @@ use super::err as ldt_err;
 use super::{util, EulumdatSymmetry, EulumdatType};
 use crate::photweb::{
     mirror_first_hemisphere, mirror_first_quadrant, IntensityUnits, PhotometricWeb, Plane,
-    PlaneOrientation, mirror_second_and_third_quadrants,
+    PlaneOrientation, mirror_second_and_third_quadrants, PhotometricWebWriter,
 };
 use crate::util::geom::degrees_to_radians;
 use crate::{err::Error, photweb::PhotometricWebReader};
@@ -600,5 +600,58 @@ impl PhotometricWebReader for EulumdatFile {
         let eul_file = Self::parse_file(path)?;
         let photweb: PhotometricWeb = eul_file.into();
         Ok(photweb)
+    }
+}
+
+impl PhotometricWebWriter for EulumdatFile {
+    fn write(pw: &PhotometricWeb, path: &Path) -> Result<(), Error> {
+        let ldt: EulumdatFile = pw.into();
+        ldt.to_file(path)?;
+        Ok(())
+    }
+}
+
+impl From<&PhotometricWeb> for EulumdatFile {
+    fn from(pw: &PhotometricWeb) -> Self {
+        let mut ldt = EulumdatFile::new();
+        // Set sensible defualt values for properties. 
+        ldt.set_header("Created by lidrs. ");
+        ldt.set_ltype(EulumdatType::PointSourceWithOtherSymmetry);
+        ldt.set_symmetry(EulumdatSymmetry::NoSymmetry);
+        ldt.set_n_cplanes(pw.n_planes());
+        ldt.set_cplane_dist(pw.delta_angle(0).total());
+        ldt.set_n_luminous_intensities_per_cplane(pw.planes()[0].n_samples());
+        ldt.set_distance_between_luminous_intensities_per_cplane(pw.planes()[0].delta_angle(0));
+        ldt.set_tilt(1.0);
+        ldt.set_n_lamp_sets(1_usize);
+        ldt.set_n_lamp(vec![1]);
+        ldt.set_lamp_type(vec![""]);
+        ldt.set_tot_luminous_flux(vec![pw.total_intensity()]);
+        ldt.set_color_temperature(vec![""]);
+        ldt.set_color_rendering_group(vec![""]);
+        ldt.set_wattage(vec![0]);
+        ldt.set_direct_ratios((0..10).map(|_| 1.0).collect::<Vec<f64>>());
+        
+        // Assemble the photometric web into the file. 
+        ldt.set_c_angles(pw
+            .planes()
+            .iter()
+            .map(|plane| plane.angle_deg())
+            .collect::<Vec<f64>>()
+        );
+        ldt.set_g_angles(pw
+            .planes()[0]
+            .angles_deg()
+        );
+        ldt.set_intensities(pw
+            .planes()
+            .iter()
+            .map(|plane| {
+                Vec::from(plane.intensities())
+            }).flatten()
+            .collect::<Vec<f64>>()
+        );
+
+        ldt
     }
 }
