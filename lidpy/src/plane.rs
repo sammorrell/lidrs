@@ -10,7 +10,7 @@ pub struct Plane {
 impl Plane {
 
     #[new]
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             pl: photweb::Plane::new(),
         }
@@ -42,5 +42,21 @@ impl Plane {
 
     pub fn integrate_intensity(&self) -> f64 {
         self.pl.integrate_intensity()
+    }
+
+    pub fn intensities(&self) -> Vec<f64> {
+        Vec::from(self.pl.intensities())
+    }
+
+    pub fn angles(&self) -> Vec<f64> {
+        Vec::from(self.pl.angles())
+    }
+}
+
+impl Plane {
+    pub fn from_lidrs_plane(plane: &photweb::Plane) -> Self {
+        let mut ret = Self::new();
+        ret.pl = plane.clone();
+        ret
     }
 }

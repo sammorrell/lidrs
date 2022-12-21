@@ -11,5 +11,5 @@ crate-type = ["cdylib", "rlib"]
 lidrs = { path = "../" }
 
 [dependencies.pyo3]
-version = "0.17.*"
+version = "0.17"
 features = ["extension-module"]
