@@ -1,6 +1,10 @@
 use pyo3::prelude::*;
-use lidrs::photweb;
+use pyo3::exceptions::PyRuntimeError;
+use lidrs::{
+    photweb,
+};
 use crate::Plane;
+use std::path::Path;
 
 #[pyclass]
 pub struct PhotometricWeb {
@@ -34,5 +38,19 @@ impl PhotometricWeb {
 
     pub fn get_cplane_pair(&self, angle_lower_deg: f64, angle_upper_deg: f64) -> Option<(Vec<f64>, Vec<f64>)> {
         self.pw.get_cplane_pair(angle_lower_deg, angle_upper_deg)
+    }
+
+    pub fn to_ies_file(&self, filepath: String) -> PyResult<()> {
+        match <lidrs::io::ies::IesFile as photweb::PhotometricWebWriter>::write(&self.pw, &Path::new(&filepath)) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(PyRuntimeError::new_err( format!("{}", e) )),
+        }
+    }
+
+    pub fn to_eulumdat_file(&self, filepath: String) -> PyResult<()> {
+        match <lidrs::io::eulumdat::EulumdatFile as photweb::PhotometricWebWriter>::write(&self.pw, &Path::new(&filepath)) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(PyRuntimeError::new_err( format!("{}", e) )),
+        }
     }
 }
