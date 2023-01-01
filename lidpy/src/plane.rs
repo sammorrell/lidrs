@@ -28,6 +28,10 @@ impl Plane {
         self.pl.n_samples()
     }
 
+    pub fn angle(&self) -> f64 {
+        self.pl.angle()
+    }
+
     pub fn angle_deg(&self) -> f64 {
         self.pl.angle_deg()
     }
