@@ -11,6 +11,8 @@ pub enum Error {
     OperationError(Box<crate::ops::err::Error>)
 }
 
+impl std::error::Error for Error {}
+
 impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Self {
         Error::IOError(err)
